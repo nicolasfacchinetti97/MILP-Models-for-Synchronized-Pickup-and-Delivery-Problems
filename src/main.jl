@@ -1,12 +1,17 @@
 include("tsp.jl")
+include("opt.jl")
+
 
 file_dir = "./istanze/"
-filename = "33p00d.tsp"
+pck_file = "33p00p.tsp"
+dlv_file = "33p00d.tsp"
 
-p = [   [1 1],
-        [2 3],
-        [1 4],
-        [4 3],
-        [5 4]]
-m = get_distance_matrix(p)
-println(m)
+# parse the file for obtain the coords
+pck_points = parse_file(file_dir, pck_file)
+dlv_points = parse_file(file_dir, dlv_file)
+# get distance matrix from the points
+pck_matrix = get_distance_matrix(pck_points)
+dlv_matrix = get_distance_matrix(dlv_points)
+# get capacity of the two veichle
+pck_k = 3
+dlv_k = 2
