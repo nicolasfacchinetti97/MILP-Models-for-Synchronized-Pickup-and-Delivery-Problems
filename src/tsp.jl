@@ -1,3 +1,5 @@
+import Distances
+
 function parse_file(file_dir, filename)
     cd(file_dir)                                                    # change the directory
 
@@ -22,8 +24,18 @@ function parse_file(file_dir, filename)
     return points
 end
 
-function get_distance_matrix(point)
-
+function get_distance_matrix(points)
+    matrix = Array{Array{Float64, 1}, 1}()
+    for x1 in points
+        row = Array{Float64, 1}()                                   # an array for the row
+        for x2 in points
+            elem = sqrt((x1[1] - x2[1])^2 + (x1[2] - x2[2])^2)      # euclidean distance between x1 and x2
+            push!(row, elem)                                        # populate the row
+        end
+        push!(matrix, row)                                          # push the row to the distance matrix
+    end
+    #for r in matrix                                                # debug
+    #    println(r)
+    #end
+    return matrix
 end
-
-
