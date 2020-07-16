@@ -1,15 +1,10 @@
-import Distances
 
-function parse_file(file_dir, filename)
-    cd(file_dir)                                                    # change the directory
-
+function parse_file(file)
     points = Array{Float64, 2}[]                                    # array for the points
     start_save = false
 
-    open(filename, "r") do file
+    open(file, "r") do file
         for ln in eachline(file)
-            global start_save
-            global points
             if start_save == true
                 ln = split(ln)[2:end]                               # extract coords from string
                 coords = map(x->parse(Float64,x), ln)               # cast from string to float
