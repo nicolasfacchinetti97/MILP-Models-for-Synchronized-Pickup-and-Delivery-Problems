@@ -25,14 +25,7 @@ function build_model(pck_matrix, dlv_matrix)
     sum_trip = @expression(m, cost_pck + cost_dlv)
     @objective(m, Min, sum_trip)
     
-    
     # _____________________________________ CONSTRAINT _____________________________________
-    # Calculate the delta variables         v1 vertex 1, v2 vertex 2
-    # @constraint(m, delta_pck-[v1 in 1:n], sum(x1[v2, v1] for v2 in 1:n) == delta-_pck[v1])
-    # @constraint(m, delta_pck+[v1 in 1:n], sum(x1[v1, v2] for v2 in 1:n) == delta+_pck[v1])
-    # @constraint(m, delta_dlv-[v1 in 1:n], sum(x2[v2, v1] for v2 in 1:n) == delta-_dlv[v1])
-    # @constraint(m, delta_dlv+[v1 in 1:n], sum(x2[v1, v2] for v2 in 1:n) == delta+_dlv[v1])
-    
     # constraint 1: outgoing archs = incoming archs from source: x_t(δ+(0)) = x_t(δ−(0)) t = 1, 2
     @constraint(m, c1_pck, sum(x1[1, v] for v in 1:n) == sum(x1[v, 1] for v in 1:n))
     @constraint(m, c1_dlv, sum(x2[1, v] for v in 1:n) == sum(x2[v, 1] for v in 1:n))
@@ -55,22 +48,31 @@ function build_model(pck_matrix, dlv_matrix)
     @constraint(m, no_self_pck[i in 1:n], x1[i,i] == 0)
     @constraint(m, no_self_dlv[i in 1:n], x2[i,i] == 0)
 
-
-    # Printing the prepared optimization model
-    print(m)
-
-    # Solving the optimization problem
-    optimize!(m)
-    println("Optimal tour solutions:")
-    println("Pck tour = ", JuMP.value(cost_pck))
-    println("Dlv tour = ", JuMP.value(cost_dlv))
-    println("X1 tour = ", JuMP.value.(x1))
-    println("X2 tour = ", JuMP.value.(x2))
-
     return m
 end
 
 
-function solve()
-
+function solve(model)
+    # Solving the optimization problem
+    optimize!(model)
+    cost_pck = model[:cost_pck]
+    cost_dlv = model[:cost_dlv]    
+    x1 = model[:x1]
+    x2 = model[:x2]
+    if termination_status(model) == MOI.OPTIMAL
+        pck_tour = value(cost_pck)
+        dlv_tour = value(cost_dlv)
+        x1 = value.(x1)
+        x2 = value.(x2)
+        return pck_tour, dlv_tour, x1, x2
+    elseif termination_status(model) == MOI.TIME_LIMIT && has_values(model)
+        pck_tour = value(cost_pck)
+        dlv_tour = value(cost_dlv)
+        x1 = value.(x1)
+        x2 = value.(x2)
+        return pck_tour, dlv_tour, x1, x2
+    else
+        error("The model was not solved correctly.")
+    end
+    
 end

@@ -26,6 +26,11 @@ dlv_matrix = get_distance_matrix(dlv_points)
 
 println("Get the base model of the problem.")
 model = build_model(pck_matrix, dlv_matrix)
+try
+    ptour, dtour, x1, x2 = solve(model)
+catch e
+    println(e.msg)
+end
 
 
 println("Exiting")
