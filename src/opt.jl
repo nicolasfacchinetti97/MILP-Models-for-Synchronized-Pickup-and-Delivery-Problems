@@ -4,6 +4,20 @@ using CPLEX
 
 
 function build_model(pck_matrix, dlv_matrix)
+    """
+    Build the base optimization problem with only 1 - 2 - 3 constraint
+
+    Parameters
+    ---------
+    pck_matrix: matrix
+        matrix of points distances of the pickup problem
+    dlv_matrix: matrix
+        matrix of points distances of the delivery problem
+    Return
+    ---------
+    Model
+        the base MILP model of the problem
+    """
     n = size(pck_matrix, 1)                         # get dimension of the matrix (number nodes)
     m = Model(CPLEX.Optimizer)                      # get a model with CPLEX as Optimizer
 
@@ -53,6 +67,24 @@ end
 
 
 function solve(model)
+    """
+    Solve the given model
+
+    Parameters
+    ---------
+    model: Model
+        MILP model of the problem    
+    Return
+    ---------
+    pck_tour
+        the cost of the pickup tour
+    dlv_tour
+        the cost of the delivery tour
+    x1
+        matrices of the choosen arches of pickup tour
+    x2
+        matrices of the choosen arches of delivery tour
+    """
     # Solving the optimization problem
     optimize!(model)
     cost_pck = model[:cost_pck]

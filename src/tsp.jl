@@ -1,5 +1,16 @@
-
 function parse_file(file)
+    """
+    Parse a .tsp file with syntax according to TSPLib and return the list of points
+
+    Parameters
+    ---------
+    file: string
+        the string of the file to open
+    Return
+    ---------
+    list
+        a list of tuple cotaining the 2D coords of the points
+    """
     points = Array{Float64, 2}[]                                    # array for the points
     start_save = false
 
@@ -19,7 +30,63 @@ function parse_file(file)
     return points
 end
 
+function parse_files(file_dir, pck_file, dlv_file)
+    """
+    Parse two .tsp file at a given directory
+
+    Parameters
+    ---------
+    file_dir: string
+        the directory cotaining the two parse_files
+    pck_file: string
+        filename of the pickup problem
+    dlv_file: string
+        filename of the delivery problem
+    Return
+    ---------
+    tuple
+        a tuple cotaining the two list of coords
+    """
+    file_location = string(file_dir, pck_file)
+    pck_points = parse_file(file_location)
+    file_location = string(file_dir, dlv_file)
+    dlv_points = parse_file(file_location)
+    return pck_points, dlv_points
+end
+
+function euclidean_distance(x, y)
+    """
+    Compute the euclidean distance between two points
+
+    Parameters
+    ---------
+    x: tuple
+        a tuple the 2D coord of the first point
+    y: tuple
+        a tuple the 2D coord of the second point
+    Return
+    ---------
+    float
+        the distance between the two points
+    """
+    return sqrt((x[1] - y[1])^2 + (x[2] - y[2])^2)
+end
+
 function get_distance_matrix(points, to_round)
+    """
+    Get the distance matrix between points
+
+    Parameters
+    ---------
+    points: list
+        a list of points in form of tuple
+    to_round: boolean
+        true if want the distances to be rounded to the closest interger, false otherwise
+    Return
+    ---------
+    Matrix
+        a matrix of float64 elements cotaining the distances between the given points
+    """
     n = length(points)
     matrix = Matrix{Float64}(undef, n, n)                           # get a matrix of dimension n*n of Float
     for (i, x1) in enumerate(points)
@@ -34,6 +101,24 @@ function get_distance_matrix(points, to_round)
     return matrix
 end
 
-function euclidean_distance(x, y)
-    return sqrt((x[1] - y[1])^2 + (x[2] - y[2])^2)
+function get_distance_matrices(pck_points, dlv_points, to_round)
+    """
+    Get the distance matrices of the pickup and delivery
+
+    Parameters
+    ---------
+    pck_points: list
+        list of points of the pickup problem
+    dlv_points: list
+        list of points of the delivery problem
+    to_round: boolean
+        true if want the distances to be rounded to the closest interger, false otherwise
+    Return
+    ---------
+    tuple
+        a tuple of matrices
+    """
+    pck_matrix = get_distance_matrix(pck_points, to_round)
+    dlv_matrix = get_distance_matrix(dlv_points, to_round)
+    return pck_matrix, dlv_matrix
 end
