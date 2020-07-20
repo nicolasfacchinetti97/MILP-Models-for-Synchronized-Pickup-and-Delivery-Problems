@@ -62,6 +62,8 @@ function build_model(pck_matrix, dlv_matrix)
     @constraint(m, no_self_pck[i in 1:n], x1[i,i] == 0)
     @constraint(m, no_self_dlv[i in 1:n], x2[i,i] == 0)
 
+    JuMP.write_to_file(m, "model_dump.lp")
+
     return m
 end
 

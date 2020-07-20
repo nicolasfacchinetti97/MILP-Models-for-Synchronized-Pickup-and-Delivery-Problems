@@ -72,6 +72,32 @@ function euclidean_distance(x, y)
     return sqrt((x[1] - y[1])^2 + (x[2] - y[2])^2)
 end
 
+function correct_distances(matrix)
+    """
+    Correct the distances in a matrix using the Floyd-Warshall algorithm
+    
+    Parameters
+    --------
+    matrix: matrix
+        matrix of distances between points to be corrected
+    Return
+    --------
+    Matrix
+        the matrix with the distances corrected
+    """
+    n = size(matrix)[1]
+    for k in 1:n
+        for i in 1:n
+            for j in 1:n
+                if matrix[i,j] > matrix[i,k] + matrix[k,j]
+                    matrix[i,j] = matrix[i,k] + matrix[k,j]
+                end
+            end 
+        end
+    end
+    return matrix
+end
+
 function get_distance_matrix(points, to_round)
     """
     Get the distance matrix between points
@@ -97,6 +123,9 @@ function get_distance_matrix(points, to_round)
             end
             matrix[i, j] = dist                                     # populate the row
         end
+    end
+    if to_round
+        matrix = correct_distances(matrix)
     end
     return matrix
 end
