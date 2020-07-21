@@ -83,9 +83,9 @@ function solve(model)
     dlv_tour
         the cost of the delivery tour
     x1
-        matrices of the choosen arches of pickup tour
+        matrices of the choosen arches in the pickup tour
     x2
-        matrices of the choosen arches of delivery tour
+        matrices of the choosen arches in the delivery tour
     """
     # Solving the optimization problem
     optimize!(model)
@@ -110,7 +110,7 @@ function solve(model)
     end  
 end
 
-function add_dynamic_constraint(model, S, k)
+function add_dynamic_constraint(model, S, k_p)
     """
     Add dynamically the constraint (4) to a given model resricted to a set of nodes
     
@@ -120,19 +120,23 @@ function add_dynamic_constraint(model, S, k)
         MILP model of the problem
     S: Array{Int64, 1}
         set of points that violate the constraint
-    k: int
-        the capacity of the veichle
+    k_p: int
+        the capacity of the pickup veichle
+    k_d: int
+        the capacity of the delivery veichle
     Return
     ---------
     Model
         the given model with the added constraint
     """
-    bound = ceil(length(S)/k)                           # round the division to the upper integer
+    bound1 = ceil(length(S)/k_p)                           # round the division to the upper integer
+    #bound2 = ceil(length(S)/k_d)
     x1 = model[:x1]
     x2 = model[:x2]
     n = size(x1, 1)
 
-    @constraint(model, sum(x1[j,n] for v in 1:n, j in S) >= bound)
+    @constraint(model, sum(x1[j,v] for v in 1:n, j in S if v ∉ S) >= bound1)  #TODO SISTEMARE IL VINCOLO
+    #@constraint(model, sum(x2[j,v] for v in 1:n, j in S if v ∉ S) >= bound2)
     return model
     
 end

@@ -28,7 +28,7 @@ function find_tour(start_node, end_node, matrix)
     return tour
 end
 
-function detect_anomaly_in_tour(matrix, capacity)
+function detect_anomalies_in_tour(matrix, capacity)
     """
     Return the first anomaly of type 1 or 2 in the graph described by the given matrix of edges
     type 1 anomaly: tours no connected to the source
@@ -42,18 +42,22 @@ function detect_anomaly_in_tour(matrix, capacity)
         maximum capacity of the veichle
     Return
     ---------
-        list of first nodes affected by one of the two anomaly or 0 if no anomaly detected
+    tuple    
+        1 first type anomaly, 2 second type anomaly     
+        list of first nodes affected by one of the two anomaly
+    0
+        if no anomaly detected
     """
     tours, excluded = find_nodes(matrix)
     # type 1 anomaly - disconnected tour
     for n in excluded
-        return find_tour(n, n, matrix)
+        return (1, find_tour(n, n, matrix))
     end
 
     # type 2 anomaly - connected tour that exceed the capacity
     for t in tours
         if length(t) > capacity
-            return t
+            return (2, t)
         end
     end
     return 0
@@ -62,7 +66,7 @@ end
 
 function find_nodes(matrix)
     """
-    find no connected elements and connected tour in a graph
+    find connected tours and no connected elements in a graph
 
     Parameters
     ---------
@@ -91,20 +95,31 @@ function find_nodes(matrix)
     return tours, excluded
 end
 
-function add_violated_constraints(model, matrix, capacity)
+function add_violated_constraints(model, matrix, capacity, problem_type)
     while true
-        res = detect_anomaly_in_tour(matrix, capacity)
+        res = detect_anomalies_in_tour(matrix, capacity)
         if res == 0
+            if problem_type == 1
+                println("No more anomalies in pickup")
+            else
+                println("No more anomalies in delivery")
             break
         end
-        println("Find a set on nodes that violate the constraint 4: ", res)
-        model = add_dynamic_constraint(model, res, capacity)
+        type = res[1]
+        nodes = res[2]
+        if type == 1
+            println("Find a set of nodes that violate the constraint 4 (type 1 anomaly): ", nodes)
+        else
+            println("Find a set of nodes that violate the constraint 4 (type 2 anomaly): ", nodes)
+        end 
+        model = add_dynamic_constraint(model, nodes, capacity)
         p_tour, d_tour, x1, x2 = try
             solve(model)
         catch e
             println(e.msg)
         end
-        println("New cost pickup: ", p_tour)  
+        matrix = x1
+        println(string("New cost pickup ", p_tour, ", new cost delivery ", d_tour, "\n", x1, "\n", x2))
     end
 end
 
@@ -135,8 +150,8 @@ catch e
     println(e.msg)
 end  
 
-println(string("Initial cost pickup ", pi_tour, ", initial cost delivery ", di_tour))
+println(string("Initial cost pickup ", pi_tour, ", initial cost delivery ", di_tour, "\n", x1, "\n", x2))
 
-add_violated_constraints(model, x1, pck_k)
-
+add_violated_constraints(model, x1, pck_k, 1)
+add_violated_constraints(model, x2, dlv_k, 2)
 println("Exiting")
