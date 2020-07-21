@@ -107,6 +107,32 @@ function solve(model)
         return pck_tour, dlv_tour, x1, x2
     else
         error("The model was not solved correctly.")
-    end
+    end  
+end
+
+function add_dynamic_constraint(model, S, k)
+    """
+    Add dynamically the constraint (4) to a given model resricted to a set of nodes
+    
+    Parameters
+    ---------
+    model: Model
+        MILP model of the problem
+    S: Array{Int64, 1}
+        set of points that violate the constraint
+    k: int
+        the capacity of the veichle
+    Return
+    ---------
+    Model
+        the given model with the added constraint
+    """
+    bound = ceil(length(S)/k)                           # round the division to the upper integer
+    x1 = model[:x1]
+    x2 = model[:x2]
+    n = size(x1, 1)
+
+    @constraint(model, sum(x1[j,n] for v in 1:n, j in S) >= bound)
+    return model
     
 end
