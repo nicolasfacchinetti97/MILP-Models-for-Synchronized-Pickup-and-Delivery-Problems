@@ -48,7 +48,7 @@ function detect_anomalies_in_tour(matrix, capacity)
     0
         if no anomaly detected
     """
-    tours, excluded = find_nodes(matrix)
+    tours, excluded = find_connected_excluded_elements(matrix)
     # type 1 anomaly - disconnected tour
     for n in excluded
         return (1, find_tour(n, n, matrix))
@@ -64,7 +64,7 @@ function detect_anomalies_in_tour(matrix, capacity)
 end
 
 
-function find_nodes(matrix)
+function find_connected_excluded_elements(matrix)
     """
     find connected tours and no connected elements in a graph
 
@@ -95,31 +95,92 @@ function find_nodes(matrix)
     return tours, excluded
 end
 
-function add_violated_constraints(model, matrix, capacity, problem_type)
+function add_violated_constraint(model, anomaly, capacity, problem_type)
+    """
+    get an anomaly in the pickup or delivery problem and add the corresponding constraint to the model
+
+    Parameters
+    ---------
+    model: Model
+        MILP model of the problem
+    anomaly: tuple
+        int
+            type of anomaly (1 or 2)
+        Array{Int64, 1}
+            set of nodes involved in the anomaly
+    capacity: int
+        capacity of the veichle
+    problem_type: int
+        1 for pickup, 2 for delivery
+    Return
+    ---------
+    Model:
+        model of the problem with the added constraint
+    """
+    type = anomaly[1]
+    nodes = anomaly[2]
+    
+    println("Type ", type, " anomaly, set of nodes that violate the constraint 4: ", nodes)
+     
+    model = add_dynamic_constraint(model, nodes, capacity, problem_type)
+    p_tour, d_tour, x1, x2 = try
+        solve(model)
+    catch e
+        println(e.msg)
+    end
+    println("New cost pickup ", p_tour, ", new cost delivery ", d_tour, "\n", x1, "\n", x2)
+    return model
+end
+
+function add_violated_constraints(model, m_pck, m_dlv, k_pck, k_dlv)
+    """
+    search repeatedly for anomalies in the pickup and delivery tour and add them to the model
+
+    Parameters
+    ---------
+    model: Model
+        MILP model of the problem
+    m_pck: Array{Int64, 2}
+        matrix of the arches for the pickup
+    m_dlv: Array{Int64, 2}
+        matrix of the arches for the delivery
+    k_pck: int
+        capacity of the pickup veichle
+    k_dlv: int
+        capacity of the delivery veichle
+    Return
+    ---------
+    Model:
+        final MILP model with all the constraint of type 4
+    """
     while true
-        res = detect_anomalies_in_tour(matrix, capacity)
-        if res == 0
-            if problem_type == 1
-                println("No more anomalies in pickup")
-            else
-                println("No more anomalies in delivery")
-            break
-        end
-        type = res[1]
-        nodes = res[2]
-        if type == 1
-            println("Find a set of nodes that violate the constraint 4 (type 1 anomaly): ", nodes)
+        done_pck = false
+        done_dlv = false
+
+        res_pck = detect_anomalies_in_tour(m_pck, k_pck)
+        if res_pck == 0
+            println("No more anomalies in pickup")
+            done_pck = true
         else
-            println("Find a set of nodes that violate the constraint 4 (type 2 anomaly): ", nodes)
-        end 
-        model = add_dynamic_constraint(model, nodes, capacity)
-        p_tour, d_tour, x1, x2 = try
-            solve(model)
-        catch e
-            println(e.msg)
+            println("Find an anomaly in pickup tour!")
+            model = add_violated_constraint(model, res_pck, k_pck, 1)
         end
-        matrix = x1
-        println(string("New cost pickup ", p_tour, ", new cost delivery ", d_tour, "\n", x1, "\n", x2))
+
+        res_dlv = detect_anomalies_in_tour(m_dlv, k_dlv)
+        if res_dlv == 0
+            println("No more anomalies in delivery")
+            done_dlv = true
+        else
+            println("Find an anomaly in delivery tour!")
+            model = add_violated_constraint(model, res_dlv, k_dlv, 2)
+        end
+        println("\n")
+        if done_pck && done_dlv
+            return model
+        else
+            m_pck = get_x1(model)
+            m_dlv = get_x2(model)
+        end
     end
 end
 
@@ -129,7 +190,7 @@ dlv_k = 2                               # delivery veichle dimension
 file_dir = "./istanze/"                 # folder containing istances
 pck_file = "prova_p.tsp"                # pickup file
 dlv_file = "prova_d.tsp"                # delivery file
-to_round = true                         # round the value when find the eclidean dist
+to_round = true                         # round the value when find the euclidean dist
 
 println("Starting...\nParse points files.")
 
@@ -152,6 +213,7 @@ end
 
 println(string("Initial cost pickup ", pi_tour, ", initial cost delivery ", di_tour, "\n", x1, "\n", x2))
 
-add_violated_constraints(model, x1, pck_k, 1)
-add_violated_constraints(model, x2, dlv_k, 2)
+bars = "-"^30
+println(bars, " Checking violated constraints ", bars)
+add_violated_constraints(model, x1, x2, pck_k, dlv_k)
 println("Exiting")

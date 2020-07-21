@@ -20,7 +20,7 @@ function build_model(pck_matrix, dlv_matrix)
     """
     n = size(pck_matrix, 1)                         # get dimension of the matrix (number nodes)
     m = Model(CPLEX.Optimizer)                      # get a model with CPLEX as Optimizer
-
+    set_optimizer_attribute(m, "CPX_PARAM_SCRIND", false)
     # _____________________________________ VARIABLES _____________________________________
     # we have a variable x for every possible arc, 1 for pck, 2 for delivery
     @variables(m, begin
@@ -110,7 +110,41 @@ function solve(model)
     end  
 end
 
-function add_dynamic_constraint(model, S, k_p)
+function get_x1(model)
+    """
+    Query the model for the value of x1
+
+    Parameters
+    ---------
+    model: Model
+        MILP model of the probel
+    Return
+    ---------
+    Array{Int64, 2}
+        matrix x1
+    """
+    x1 = model[:x1]
+    return value.(x1)
+end
+
+function get_x2(model)
+    """
+    Query the model for the value of x2
+
+    Parameters
+    ---------
+    model: Model
+        MILP model of the probel
+    Return
+    ---------
+    Array{Int64, 2}
+        matrix x2
+    """
+    x2 = model[:x2]
+    return value.(x2)
+end
+
+function add_dynamic_constraint(model, S, k, type)
     """
     Add dynamically the constraint (4) to a given model resricted to a set of nodes
     
@@ -120,23 +154,24 @@ function add_dynamic_constraint(model, S, k_p)
         MILP model of the problem
     S: Array{Int64, 1}
         set of points that violate the constraint
-    k_p: int
-        the capacity of the pickup veichle
-    k_d: int
-        the capacity of the delivery veichle
+    k: int
+        the capacity of the veichle
+    type: int
+        1 for pickup, 2 for delivery
     Return
     ---------
     Model
         the given model with the added constraint
     """
-    bound1 = ceil(length(S)/k_p)                           # round the division to the upper integer
-    #bound2 = ceil(length(S)/k_d)
+    bound = ceil(length(S)/k)                           # round the division to the upper integer
     x1 = model[:x1]
     x2 = model[:x2]
     n = size(x1, 1)
-
-    @constraint(model, sum(x1[j,v] for v in 1:n, j in S if v ∉ S) >= bound1)  #TODO SISTEMARE IL VINCOLO
-    #@constraint(model, sum(x2[j,v] for v in 1:n, j in S if v ∉ S) >= bound2)
+    if type == 1
+        @constraint(model, sum(x1[j,v] for v in 1:n, j in S if v ∉ S) >= bound)
+    else
+        @constraint(model, sum(x2[j,v] for v in 1:n, j in S if v ∉ S) >= bound)
+    end
     return model
     
 end
