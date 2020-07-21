@@ -1,3 +1,4 @@
 .vscode/
 src/istanze/
-src/model_dump.lp
+src/init_dump.lp
+src/final_dump.lp

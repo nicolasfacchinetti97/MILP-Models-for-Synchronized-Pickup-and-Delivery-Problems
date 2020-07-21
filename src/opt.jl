@@ -3,7 +3,7 @@ using JuMP
 using CPLEX
 
 
-function build_model(pck_matrix, dlv_matrix)
+function build_model(pck_matrix, dlv_matrix, print_log, dump)
     """
     Build the base optimization problem with only 1 - 2 - 3 constraint
 
@@ -13,6 +13,10 @@ function build_model(pck_matrix, dlv_matrix)
         matrix of points distances of the pickup problem
     dlv_matrix: matrix
         matrix of points distances of the delivery problem
+    print_log: boolean
+        true if want the log of CPLEX, false otherwise
+    dump: boolean
+        true if want to dump the model to .lp file
     Return
     ---------
     Model
@@ -20,7 +24,7 @@ function build_model(pck_matrix, dlv_matrix)
     """
     n = size(pck_matrix, 1)                         # get dimension of the matrix (number nodes)
     m = Model(CPLEX.Optimizer)                      # get a model with CPLEX as Optimizer
-    set_optimizer_attribute(m, "CPX_PARAM_SCRIND", false)
+    set_optimizer_attribute(m, "CPX_PARAM_SCRIND", print_log)
     # _____________________________________ VARIABLES _____________________________________
     # we have a variable x for every possible arc, 1 for pck, 2 for delivery
     @variables(m, begin
@@ -62,7 +66,9 @@ function build_model(pck_matrix, dlv_matrix)
     @constraint(m, no_self_pck[i in 1:n], x1[i,i] == 0)
     @constraint(m, no_self_dlv[i in 1:n], x2[i,i] == 0)
 
-    JuMP.write_to_file(m, "model_dump.lp")
+    if dump
+        JuMP.write_to_file(m, "init_dump.lp")
+    end
 
     return m
 end
@@ -144,6 +150,37 @@ function get_x2(model)
     return value.(x2)
 end
 
+function get_values(model)
+    """
+    return the pickup tour price, delivery tour price and the matrices x1 and x2
+
+    Parameters
+    ---------
+    model: Model
+        MILP model of the problem
+    Return
+    ---------
+    tuple
+        int
+            pickup tour price
+        int
+            delivery tour price
+        Array{Int64, 2}
+            matrix of arches for the pickup problem
+        Array{Int64, 2}
+            matrix of arches for the delivery probel
+    """
+    cost_pck = model[:cost_pck]
+    cost_dlv = model[:cost_dlv]    
+    x1 = model[:x1]
+    x2 = model[:x2]
+    pck_tour = value(cost_pck)
+    dlv_tour = value(cost_dlv)
+    x1 = value.(x1)
+    x2 = value.(x2)
+    return pck_tour, dlv_tour, x1, x2
+end
+
 function add_dynamic_constraint(model, S, k, type)
     """
     Add dynamically the constraint (4) to a given model resricted to a set of nodes
@@ -168,9 +205,9 @@ function add_dynamic_constraint(model, S, k, type)
     x2 = model[:x2]
     n = size(x1, 1)
     if type == 1
-        @constraint(model, sum(x1[j,v] for v in 1:n, j in S if v ∉ S) >= bound)
+        @constraint(model, name, sum(x1[j,v] for v in 1:n, j in S if v ∉ S) >= bound)
     else
-        @constraint(model, sum(x2[j,v] for v in 1:n, j in S if v ∉ S) >= bound)
+        @constraint(model, name, sum(x2[j,v] for v in 1:n, j in S if v ∉ S) >= bound)
     end
     return model
     
