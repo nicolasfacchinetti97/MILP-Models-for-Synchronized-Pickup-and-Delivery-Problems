@@ -2,15 +2,35 @@ include("tsp.jl")
 include("opt.jl")
 include("fix_anomalies.jl")
 
+using TOML
+
+function load_conf(filename)
+    """
+    Load the parameters of the program from a file
+
+    Parameters
+    ---------
+    filename: string
+        the name of the config filem with his relative path
+    Return
+    ---------
+    tuple
+        all the parameters of the program
+    """
+    dict = TOML.parsefile(filename)
+    pck_k = dict["pck_k"]
+    dlv_k = dict["dlv_k"]
+    file_dir = dict["file_dir"]
+    pck_file = dict["pck_file"]
+    dlv_file = dict["dlv_file"]
+    to_round = dict["to_round"]
+    print_log = dict["print_log"]
+    model_dump = dict["model_dump"]
+    return pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump
+end
+
 # parameters
-pck_k = 3                               # pickup veichle dimension
-dlv_k = 2                               # delivery veichle dimension
-file_dir = "./istanze/"                 # folder containing istances
-pck_file = "prova_p.tsp"                # pickup file
-dlv_file = "prova_d.tsp"                # delivery file
-to_round = true                         # round the value when find the euclidean dist
-print_log = false                       # suppress logging of CPLEX
-model_dump = true                       # for dumping to .lp file the model
+pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump = load_conf("conf.toml")
 
 # parse the files to obtain the coords
 println("Starting...\nParse points files.")

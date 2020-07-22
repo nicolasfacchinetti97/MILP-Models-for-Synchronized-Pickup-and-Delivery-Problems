@@ -205,9 +205,9 @@ function add_dynamic_constraint(model, S, k, type)
     x2 = model[:x2]
     n = size(x1, 1)
     if type == 1
-        @constraint(model, name, sum(x1[j,v] for v in 1:n, j in S if v ∉ S) >= bound)
+        @constraint(model, sum(x1[j,v] for v in 1:n, j in S if v ∉ S) >= bound)
     else
-        @constraint(model, name, sum(x2[j,v] for v in 1:n, j in S if v ∉ S) >= bound)
+        @constraint(model, sum(x2[j,v] for v in 1:n, j in S if v ∉ S) >= bound)
     end
     return model
     
