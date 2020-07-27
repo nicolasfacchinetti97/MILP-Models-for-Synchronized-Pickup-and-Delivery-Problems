@@ -46,6 +46,8 @@ function detect_anomalies_in_tour(matrix, capacity)
         if no anomaly detected
     """
     tours, excluded = find_connected_excluded_elements(matrix)
+
+
     # type 1 anomaly - disconnected tour
     for n in excluded
         return (1, find_tour(n, n, matrix))
@@ -79,6 +81,7 @@ function find_connected_excluded_elements(matrix)
     """
     n = size(matrix, 1)
     start_nodes = [i for i in 1:n if matrix[1,i] == 1]              # find nodes reachable from source
+
     tours = Array{Array{Int64,1},1}()                               # collect all the tours reachable from source
     for n in start_nodes
         tour = find_tour(n, 1, matrix)
@@ -126,8 +129,13 @@ function add_violated_constraint(model, anomaly, capacity, problem_type)
         println(e.msg)
     end
     println("New cost pickup ", p_tour, ", new cost delivery ", d_tour)
-    #println(x1, "\n", x2)
+
     return model
+end
+
+function print_arr(arr)
+    show(stdout, "text/plain", arr)
+    println()
 end
 
 function add_violated_constraints(model, m_pck, m_dlv, k_pck, k_dlv)
@@ -173,6 +181,7 @@ function add_violated_constraints(model, m_pck, m_dlv, k_pck, k_dlv)
             model = add_violated_constraint(model, res_dlv, k_dlv, 2)
         end
         println("\n")
+
         if done_pck && done_dlv
             return model
         else

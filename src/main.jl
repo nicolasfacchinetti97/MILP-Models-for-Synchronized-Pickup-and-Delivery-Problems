@@ -62,4 +62,11 @@ if model_dump
     JuMP.write_to_file(model, "final_dump.lp")
 end
 
+# check solution integrity
+if check_solution_integrity(x1f, x2f, pck_k, dlv_k)
+    println("Integrity check passed")
+else
+    println("Integrity check not passed")
+end
+
 println("Exiting")
