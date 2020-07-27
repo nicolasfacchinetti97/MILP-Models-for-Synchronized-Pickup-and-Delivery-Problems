@@ -120,7 +120,7 @@ function add_violated_constraint(model, anomaly, capacity, problem_type)
     type = anomaly[1]
     nodes = anomaly[2]
     
-    println("Type ", type, " anomaly, set of nodes that violate the constraint 4: ", nodes)
+    println("Type $type anomaly, set of nodes that violate the constraint 4: $nodes")
      
     model = add_dynamic_constraint(model, nodes, capacity, problem_type)
     p_tour, d_tour, x1, x2 = try
@@ -128,7 +128,7 @@ function add_violated_constraint(model, anomaly, capacity, problem_type)
     catch e
         println(e.msg)
     end
-    println("New cost pickup ", p_tour, ", new cost delivery ", d_tour)
+    println("New cost pickup $p_tour, new cost delivery $d_tour")
 
     return model
 end

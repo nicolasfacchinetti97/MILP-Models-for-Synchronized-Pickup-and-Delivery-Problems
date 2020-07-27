@@ -50,15 +50,15 @@ pi_tour, di_tour, x1, x2 = try
 catch e
     println(e.msg)
 end  
-println("Initial cost pickup ", pi_tour, ", initial cost delivery ", di_tour, "\n", x1, "\n", x2)
+println("Initial cost pickup $pi_tour, initial cost delivery $di_tour")
 
 # check and iteratively add the violated constraints 4 untill the are no more anomalies
 println("-"^30, " Checking violated constraints ", "-"^30)
 model = add_violated_constraints(model, x1, x2, pck_k, dlv_k)
 
 pf_tour, df_tour, x1f, x2f = get_values(model)
-println("Final cost pickup ", pf_tour, ", final cost delivery ", df_tour)
-println("Initial cost pickup ", pi_tour, ", initial cost delivery ", di_tour)
+println("Final cost pickup $pf_tour, final cost delivery $df_tour")
+println("Initial cost pickup $pi_tour, initial cost delivery $di_tour")
 
 if model_dump
     JuMP.write_to_file(model, "final_dump.lp")
