@@ -1,4 +1,4 @@
-.vscode/
-src/istanze/
-src/init_dump.lp
-src/final_dump.lp
+istanze/
+src/*.lp
+src/*.lp
+src/*.dot

@@ -180,7 +180,7 @@ end
 
 function check_integrity(matrix, capacity)
     """
-    Checking the integrity of a solution, all the nodes in a tour and capacity not exceed
+    Checking the integrity of a solution, all the nodes are in a tour and capacity not exceed the veichle one's
 
     Parameters
     ---------
@@ -195,11 +195,11 @@ function check_integrity(matrix, capacity)
     """
     tours, excluded = find_connected_excluded_elements(matrix)
 
-    if length(excluded) > 0
+    if length(excluded) > 0                                    # check that no nodes are excluded                       
         println("Left out from the tours vertices: ", excluded)
         return false
     end
-    for t in tours
+    for t in tours                                             # check that tour not exceed veichle's capacity
         if length(t) > capacity
             println("Tour ", t, " exceed the capacity.")
             return false
@@ -207,4 +207,31 @@ function check_integrity(matrix, capacity)
     end
     println("The solution is valid!")
     return true
+end
+
+function create_dot_file(matrix, filename)
+    """
+    Create a .dot file that describe a graph
+
+    Parameters
+    ----------
+    matrix: Array{Int64, 2}
+        matrix of edges that describe a graph
+    filename: string
+        string of the file
+    Return
+    ----------
+    """
+    n,m = size(matrix)                          # get the size of the matrix
+    open(filename, "w") do f
+        write(f, "digraph graphname {\n")
+        for i in 1:n
+            for j in 1:m
+                if matrix[i,j] == 1
+                    write(f, "$i -> $j \n")
+                end
+            end
+        end
+        write(f, "}")
+    end
 end

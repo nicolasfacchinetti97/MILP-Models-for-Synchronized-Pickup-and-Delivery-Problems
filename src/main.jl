@@ -26,11 +26,12 @@ function load_conf(filename)
     to_round = dict["to_round"]
     print_log = dict["print_log"]
     model_dump = dict["model_dump"]
-    return pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump
+    save_dot = dict["save_dot"]
+    return pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot
 end
 
 # parameters
-pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump = load_conf("conf.toml")
+pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot = load_conf("conf.toml")
 
 # parse the files to obtain the coords
 println("Starting...\nParse points files.")
@@ -68,5 +69,10 @@ if check_solution_integrity(x1f, x2f, pck_k, dlv_k)
 else
     println("Integrity check not passed")
 end
+
+# export solution to dot file
+if save_dot
+    create_dot_file(x1f, "pck.dot")
+    create_dot_file(x2f, "dlv.dot")
 
 println("Exiting")

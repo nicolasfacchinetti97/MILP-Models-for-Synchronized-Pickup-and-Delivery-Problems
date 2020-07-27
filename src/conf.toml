@@ -1,8 +1,9 @@
 pck_k = 3                               # pickup veichle dimension
 dlv_k = 2                               # delivery veichle dimension
-file_dir = "./istanze/"                 # folder containing istances
+file_dir = "../istanze/"                 # folder containing istances
 pck_file = "0p.tsp"                # pickup file
 dlv_file = "0d.tsp"                # delivery file
 to_round = true                         # round the value when find the euclidean dist
 print_log = false                       # suppress logging of CPLEX
 model_dump = true                       # for dumping to .lp file the model
+save_dot = true                         # for saving the final matrices in dot file
