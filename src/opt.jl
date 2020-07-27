@@ -1,7 +1,7 @@
 # load JuMP
 using JuMP
 using CPLEX
-
+using DelimitedFiles
 
 function build_model(pck_matrix, dlv_matrix, print_log, dump)
     """
@@ -209,6 +209,43 @@ function add_dynamic_constraint(model, S, k, type)
     else
         @constraint(model, sum(x2[j,v] for v in 1:n, j in S if v ∉ S) >= bound)
     end
-    return model
+    return model  
+end
+
+function save_result(model, filename)
+    """
+    Save the results of the program to file
+
+    Parameters
+    ----------
+    model: Model
+        MILP model of the probel resolved
+    filename: string
+        name of the file used to print the results
+    Return
+    ----------
+    boolean
+        true if the function is executed
+    """
+    cost_pck, cost_dlv, matrix_pck, matrix_dlv = get_values(model)
+    tour_pck, _ = find_connected_excluded_elements(matrix_pck)
+    tour_dlv, _ = find_connected_excluded_elements(matrix_dlv)
+    open(filename, "w") do f
+        write(f, "PICKUP\n")
+        write(f, "COST\n")
+        write(f, "$cost_pck \n")
+        write(f, "TOUR\n")
+        writedlm(f, tour_pck)
+        write(f, "MATRIX\n")
+        writedlm(f, matrix_pck)
+        write(f, "DELIVERY\n")
+        write(f, "COST\n")
+        write(f, "$cost_dlv \n")
+        write(f, "TOUR\n")
+        writedlm(f, tour_pck)
+        write(f, "MATRIX\n")
+        writedlm(f, matrix_pck)
+    end
     
+    return true
 end

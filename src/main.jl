@@ -27,11 +27,12 @@ function load_conf(filename)
     print_log = dict["print_log"]
     model_dump = dict["model_dump"]
     save_dot = dict["save_dot"]
-    return pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot
+    result_name = dict["result_name"]
+    return pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name
 end
 
 # parameters
-pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot = load_conf("conf.toml")
+pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name = load_conf("conf.toml")
 
 # parse the files to obtain the coords
 println("Starting...\nParse points files.")
@@ -61,18 +62,24 @@ println("Initial cost pickup ", pi_tour, ", initial cost delivery ", di_tour)
 
 if model_dump
     JuMP.write_to_file(model, "final_dump.lp")
+    println("Model dump saved to file.\n")
 end
 
 # check solution integrity
 if check_solution_integrity(x1f, x2f, pck_k, dlv_k)
-    println("Integrity check passed")
+    println("Integrity check passed\n")
 else
-    println("Integrity check not passed")
+    println("Integrity check not passed\n")
 end
 
 # export solution to dot file
 if save_dot
     create_dot_file(x1f, "pck.dot")
     create_dot_file(x2f, "dlv.dot")
+    println("Saved .dot files.\n")
+end
+
+println("Saving the results to file: $result_name")
+save_result(model, result_name)
 
 println("Exiting")
