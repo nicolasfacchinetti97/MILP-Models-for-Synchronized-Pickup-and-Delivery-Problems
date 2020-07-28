@@ -1,5 +1,5 @@
-pck_k = 3                               # pickup veichle dimension
-dlv_k = 2                               # delivery veichle dimension
+pck_k = 2                               # pickup veichle dimension
+dlv_k = 3                               # delivery veichle dimension
 file_dir = "../istanze/"                 # folder containing istances
 pck_file = "0p.tsp"                # pickup file
 dlv_file = "0d.tsp"                # delivery file

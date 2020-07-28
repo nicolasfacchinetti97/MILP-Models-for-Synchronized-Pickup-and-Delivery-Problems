@@ -17,10 +17,10 @@ function find_tour(start_node, end_node, matrix)
     """
     n = size(matrix, 1)
     tour = [start_node]
-    next = [i for i in 1:n if matrix[start_node, i] == 1][1]
+    next = [i for i in 1:n if matrix[start_node, i] > 0.5][1]
     while next != end_node
         push!(tour, next)
-        next = [i for i in 1:n if matrix[next, i] == 1][1]
+        next = [i for i in 1:n if matrix[next, i] > 0.5][1]
     end
     return tour
 end
@@ -80,7 +80,7 @@ function find_connected_excluded_elements(matrix)
             array of excluded elements from tours that start from the source
     """
     n = size(matrix, 1)
-    start_nodes = [i for i in 1:n if matrix[1,i] == 1]              # find nodes reachable from source
+    start_nodes = [i for i in 1:n if matrix[1,i] > 0.5]              # find nodes reachable from source
 
     tours = Array{Array{Int64,1},1}()                               # collect all the tours reachable from source
     for n in start_nodes

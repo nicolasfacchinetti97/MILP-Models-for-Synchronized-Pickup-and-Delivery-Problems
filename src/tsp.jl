@@ -228,7 +228,7 @@ function create_dot_file(matrix, filename)
         for i in 1:n
             for j in 1:m
                 if matrix[i,j] == 1
-                    write(f, "$i -> $j \n")
+                    write(f, "$i -> $j; \n")
                 end
             end
         end
