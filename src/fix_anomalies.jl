@@ -1,3 +1,5 @@
+import Dates
+
 function find_tour(start_node, end_node, matrix)
     """
     find a tour in the graph using a starting node and a end node in a matrix of edges
@@ -138,7 +140,7 @@ function print_arr(arr)
     println()
 end
 
-function add_violated_constraints(model, m_pck, m_dlv, k_pck, k_dlv)
+function add_violated_constraints(model, m_pck, m_dlv, k_pck, k_dlv, max_seconds)
     """
     search repeatedly for anomalies in the pickup and delivery tour and add them to the model
 
@@ -154,11 +156,14 @@ function add_violated_constraints(model, m_pck, m_dlv, k_pck, k_dlv)
         capacity of the pickup veichle
     k_dlv: int
         capacity of the delivery veichle
+    max_seconds: int
+        max time in seconds to wait for an optimal solution 
     Return
     ---------
     Model:
         final MILP model with all the constraint of type 4
     """
+    start = Dates.now()
     while true
         done_pck = false
         done_dlv = false
@@ -181,8 +186,12 @@ function add_violated_constraints(model, m_pck, m_dlv, k_pck, k_dlv)
             model = add_violated_constraint(model, res_dlv, k_dlv, 2)
         end
         println("\n")
-
+        
+        elapsed = (Dates.now() - start).value                    # check how much time is passed from start
         if done_pck && done_dlv
+            return model
+        elseif elapsed >= max_seconds * 1000                       # convert to milliseconds
+            println("Max time of $max_seconds seconds elapsed, stopping search.")
             return model
         else
             m_pck = get_x1(model)

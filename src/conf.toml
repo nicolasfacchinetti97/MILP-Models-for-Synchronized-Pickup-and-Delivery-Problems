@@ -8,4 +8,5 @@ print_log = false                       # suppress logging of CPLEX
 model_dump = true                       # for dumping to .lp file the model
 save_dot = true                         # for saving the final matrices in dot file
 result_name = "result.txt"              # filename used to write the results
-read_n_node = 12                        # max number of nodes to read from files
+read_n_node = 25                        # max number of nodes to read from files
+max_seconds = 5                         # max seconds to wait for a opt solution

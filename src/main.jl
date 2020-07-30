@@ -29,11 +29,12 @@ function load_conf(filename)
     save_dot = dict["save_dot"]
     result_name = dict["result_name"]
     read_n_node = dict["read_n_node"]
-    return pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name, read_n_node
+    max_seconds = dict["max_seconds"]
+    return pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name, read_n_node, max_seconds
 end
 
 # parameters
-pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name, read_n_node = load_conf("conf.toml")
+pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name, read_n_node, max_seconds = load_conf("conf.toml")
 
 # parse the files to obtain the coords
 println("Starting...\nParse points files.")
@@ -56,7 +57,7 @@ println("Initial cost pickup $pi_tour, initial cost delivery $di_tour")
 
 # check and iteratively add the violated constraints 4 untill the are no more anomalies
 println("-"^30, " Checking violated constraints ", "-"^30)
-model = add_violated_constraints(model, x1, x2, pck_k, dlv_k)
+model = add_violated_constraints(model, x1, x2, pck_k, dlv_k, max_seconds)
 
 pf_tour, df_tour, x1f, x2f = get_values(model)
 println("Final cost pickup $pf_tour, final cost delivery $df_tour")
