@@ -54,6 +54,9 @@ end
 # get the base MILP model of the problem (only constraints 1-3)
 println("Get the base model of the problem.")
 model = build_model(pck_matrix, dlv_matrix, print_log, model_dump)
+
+model = add_permutation_overlap_constraint(model)
+
 pi_tour, di_tour, x1, x2 = try
     solve(model)
 catch e

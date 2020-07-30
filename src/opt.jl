@@ -201,9 +201,7 @@ function add_dynamic_constraint(model, S, k, type)
         the given model with the added constraint
     """
     bound = ceil(length(S)/k)                           # round the division to the upper integer
-    x1 = model[:x1]
-    x2 = model[:x2]
-    n = size(x1, 1)
+    x1, x2, n = get_x1_x2_n(model)
     if type == 1
         @constraint(model, sum(x1[j,v] for v in 1:n, j in S if v ∉ S) >= bound)
     else
@@ -230,4 +228,47 @@ function get_opt(model)
     optimal_objective = objective_value(model)
     optimal_bound =  objective_bound(model)
     return optimal_objective, optimal_bound
+end
+
+function get_x1_x2_n(model)
+	"get x1, x2 and number of nodes to add constraint to the model
+	
+	Parameters
+	----------
+	model: Model
+		MILP model of the probel
+	Return
+	----------
+	Float64
+		pck matrix (x1)
+	Float64
+		dlv matrix (x2)
+	int
+		number of nodes in the instance
+	"
+	x1 = model[:x1]
+    x2 = model[:x2]
+    n = size(x1, 1)
+	return x1, x2, n
+end
+
+function add_permutation_overlap_constraint(model)
+    """
+    Add the constraint 16 - 17 to the model
+    
+    Parameters
+    ----------
+    model:
+        base MILP model of the probel
+    Return
+    ----------
+    Model
+        the model with the added constraints
+    """
+	x1, x2, n = get_x1_x2_n(model)
+    @constraint(model, c16_1[v in 2:n, w in 2:n], 2x1[v,w] <= 2x2[v,w] + x2[v,1] + x2[1,w])
+    @constraint(model, c16_2[v in 2:n, w in 2:n], 2x2[v,w] <= 2x1[v,w] + x1[v,1] + x1[1,w])
+    @constraint(model, c17_1[v in 2:n, w in 2:n], 2x1[v,1] + 2x1[1,w] <= 2 + 2x2[v,w] + x2[v,1] + x2[1,w])
+	@constraint(model, c17_2[v in 2:n, w in 2:n], 2x2[v,1] + 2x2[1,w] <= 2 + 2x1[v,w] + x1[v,1] + x1[1,w])
+	return model
 end
