@@ -252,7 +252,7 @@ function get_x1_x2_n(model)
 	return x1, x2, n
 end
 
-function add_permutation_overlap_constraint(model)
+function add_no_permutation_overlap_constraint(model)
     """
     Add the constraint 16 - 17 to the model
     
@@ -271,4 +271,39 @@ function add_permutation_overlap_constraint(model)
     @constraint(model, c17_1[v in 2:n, w in 2:n], 2x1[v,1] + 2x1[1,w] <= 2 + 2x2[v,w] + x2[v,1] + x2[1,w])
 	@constraint(model, c17_2[v in 2:n, w in 2:n], 2x2[v,1] + 2x2[1,w] <= 2 + 2x1[v,w] + x1[v,1] + x1[1,w])
 	return model
+end
+
+function add_no_permutation_no_overlap_constraint(model)
+    """
+    Add the constraints 16-17, 6-13, 24
+
+    Parameters
+    ----------
+    model:
+        base MILP model of the probel
+    Return
+    ----------
+    Model
+        the model with the added constraints
+    """
+    model = add_no_permutation_overlap_constraint(model)
+    x1, x2, n = get_x1_x2_n(model)
+
+    @variables(model, begin                         # precedence variables
+        y1[2:n, 2:n], (Bin)                      
+        y2[2:n, 2:n], (Bin)
+    end)
+
+    @constraint(model, c6_pck[v in 2:n, w in 2:n], y1[v,w] + y1[w,v] <= 1)
+    @constraint(model, c6_dlv[v in 2:n, w in 2:n], y2[v,w] + y2[w,v] <= 1)
+
+    @constraint(model, c7_pck[v in 2:n, w in 2:n], y1[v,w] + x1[v,w] <= 1)
+    @constraint(model, c7_dlv[v in 2:n, w in 2:n], y2[v,w] + x2[v,w] <= 1)
+
+    @constraint(model, c8_pck[v in 2:n, w in 2:n], y1[v,w] + x1[w,v] <= 1)
+    @constraint(model, c8_dlv[v in 2:n, w in 2:n], y2[v,w] + x2[w,v] <= 1)
+
+
+    
+
 end

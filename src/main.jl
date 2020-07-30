@@ -55,7 +55,7 @@ end
 println("Get the base model of the problem.")
 model = build_model(pck_matrix, dlv_matrix, print_log, model_dump)
 
-model = add_permutation_overlap_constraint(model)
+model = add_no_permutation_overlap_constraint(model)
 
 pi_tour, di_tour, x1, x2 = try
     solve(model)
