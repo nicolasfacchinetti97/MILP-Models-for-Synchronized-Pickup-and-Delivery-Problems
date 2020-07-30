@@ -1,6 +1,7 @@
 include("tsp.jl")
 include("opt.jl")
 include("fix_anomalies.jl")
+include("io.jl")
 
 using TOML
 
@@ -92,6 +93,6 @@ if save_dot
 end
 
 println("Saving the results to file: $result_name")
-save_result(model, result_name)
+save_solution(model, result_name)
 
 println("Exiting")

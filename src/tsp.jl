@@ -1,40 +1,3 @@
-function parse_file(file, max_node)
-    """
-    Parse a .tsp file with syntax according to TSPLib and return the list of points
-
-    Parameters
-    ---------
-    file: string
-        the string of the file to open
-    max_node: int
-        max number of nodes to read from the files
-    Return
-    ---------
-    list
-        a list of tuple cotaining the 2D coords of the points
-    """
-    points = Array{Float64, 2}[]                                    # array for the points
-    start_save = false
-    i = 0
-    open(file, "r") do file
-        for ln in eachline(file)
-            if start_save == true
-                if i == max_node                                    # return if read max number of nodes
-                    return points
-                end
-                ln = split(ln)[2:end]                               # extract coords from string
-                coords = map(x->parse(Float64,x), ln)               # cast from string to float
-                points = push!(points, [coords[1] coords[2]])
-                i += 1
-            end
-            if ln == "NODE_COORD_SECTION"                           # find where start lists of coords
-                start_save = true
-            end
-        end
-    end
-
-    return points
-end
 
 function parse_files(file_dir, pck_file, dlv_file, read_n_node)
     """
@@ -215,31 +178,4 @@ function check_integrity(matrix, capacity)
     end
     println("The solution is valid!")
     return true
-end
-
-function create_dot_file(matrix, filename)
-    """
-    Create a .dot file that describe a graph
-
-    Parameters
-    ----------
-    matrix: Array{Int64, 2}
-        matrix of edges that describe a graph
-    filename: string
-        string of the file
-    Return
-    ----------
-    """
-    n,m = size(matrix)                          # get the size of the matrix
-    open(filename, "w") do f
-        write(f, "digraph graphname {\n")
-        for i in 1:n
-            for j in 1:m
-                if matrix[i,j] == 1
-                    write(f, "$i -> $j; \n")
-                end
-            end
-        end
-        write(f, "}")
-    end
 end
