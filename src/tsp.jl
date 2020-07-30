@@ -1,4 +1,4 @@
-function parse_file(file)
+function parse_file(file, max_node)
     """
     Parse a .tsp file with syntax according to TSPLib and return the list of points
 
@@ -6,6 +6,8 @@ function parse_file(file)
     ---------
     file: string
         the string of the file to open
+    max_node: int
+        max number of nodes to read from the files
     Return
     ---------
     list
@@ -13,13 +15,17 @@ function parse_file(file)
     """
     points = Array{Float64, 2}[]                                    # array for the points
     start_save = false
-
+    i = 0
     open(file, "r") do file
         for ln in eachline(file)
             if start_save == true
+                if i == max_node                                    # return if read max number of nodes
+                    return points
+                end
                 ln = split(ln)[2:end]                               # extract coords from string
                 coords = map(x->parse(Float64,x), ln)               # cast from string to float
                 points = push!(points, [coords[1] coords[2]])
+                i += 1
             end
             if ln == "NODE_COORD_SECTION"                           # find where start lists of coords
                 start_save = true
@@ -30,7 +36,7 @@ function parse_file(file)
     return points
 end
 
-function parse_files(file_dir, pck_file, dlv_file)
+function parse_files(file_dir, pck_file, dlv_file, read_n_node)
     """
     Parse two .tsp file at a given directory
 
@@ -42,15 +48,17 @@ function parse_files(file_dir, pck_file, dlv_file)
         filename of the pickup problem
     dlv_file: string
         filename of the delivery problem
+    read_n_node: int
+        max number of nodes to read from the files
     Return
     ---------
     tuple
         a tuple cotaining the two list of coords
     """
     file_location = string(file_dir, pck_file)
-    pck_points = parse_file(file_location)
+    pck_points = parse_file(file_location, read_n_node)
     file_location = string(file_dir, dlv_file)
-    dlv_points = parse_file(file_location)
+    dlv_points = parse_file(file_location, read_n_node)
     return pck_points, dlv_points
 end
 

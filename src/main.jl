@@ -28,15 +28,16 @@ function load_conf(filename)
     model_dump = dict["model_dump"]
     save_dot = dict["save_dot"]
     result_name = dict["result_name"]
-    return pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name
+    read_n_node = dict["read_n_node"]
+    return pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name, read_n_node
 end
 
 # parameters
-pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name = load_conf("conf.toml")
+pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name, read_n_node = load_conf("conf.toml")
 
 # parse the files to obtain the coords
 println("Starting...\nParse points files.")
-pck_points, dlv_points = parse_files(file_dir, pck_file, dlv_file)
+pck_points, dlv_points = parse_files(file_dir, pck_file, dlv_file, read_n_node)
 
 # get distance matrix from the points
 println("Compute distance matrix from points coords.")
@@ -51,6 +52,7 @@ catch e
     println(e.msg)
 end  
 println("Initial cost pickup $pi_tour, initial cost delivery $di_tour")
+
 
 # check and iteratively add the violated constraints 4 untill the are no more anomalies
 println("-"^30, " Checking violated constraints ", "-"^30)
