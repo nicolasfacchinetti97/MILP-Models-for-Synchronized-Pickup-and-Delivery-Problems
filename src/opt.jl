@@ -212,6 +212,54 @@ function add_dynamic_constraint(model, S, k, type)
     return model  
 end
 
+function get_opt(model)
+    """
+    return the value of the best solution and the best lower bound
+
+    Parameters
+    ----------
+    model: Model
+        MILP model of the probel
+    Return
+    ----------
+    Float64
+        best value
+    Float64
+        lower boun
+    """
+    optimal_objective = objective_value(model)
+    optimal_bound =  objective_bound(model)
+    return optimal_objective, optimal_bound
+end
+
+
+function save_instance(filename, name, model, n, k_p, k_d, time)
+    """
+    Write on a file a row in the format "instance_name n kp kd 3b-1 3b-2 time"
+
+    Parameters
+    ----------
+    filename: string
+        name of the output file
+    name: string
+        name of the instance
+    model: Model
+        solved MILP model of the probel
+    n: int
+        nuber of nodes
+    k_p: int
+        pickup capacity
+    k_d: int
+        delivery capacity
+    time: int
+        time in seconds elapsed
+    """
+    best_value, lower_bound = get_opt(model)
+    open(filename, "a") do f
+        write(f, "$name $n $k_p $k_d $best_value $lower_bound $time \n")
+    end
+end
+
 function save_result(model, filename)
     """
     Save the results of the program to file

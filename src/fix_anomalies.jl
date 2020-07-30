@@ -162,6 +162,8 @@ function add_violated_constraints(model, m_pck, m_dlv, k_pck, k_dlv, max_seconds
     ---------
     Model:
         final MILP model with all the constraint of type 4
+    int:
+        milliseconds to find the solution
     """
     start = Dates.now()
     while true
@@ -189,10 +191,10 @@ function add_violated_constraints(model, m_pck, m_dlv, k_pck, k_dlv, max_seconds
         
         elapsed = (Dates.now() - start).value                    # check how much time is passed from start
         if done_pck && done_dlv
-            return model
+            return model, elapsed
         elseif elapsed >= max_seconds * 1000                       # convert to milliseconds
             println("Max time of $max_seconds seconds elapsed, stopping search.")
-            return model
+            return model, elapsed
         else
             m_pck = get_x1(model)
             m_dlv = get_x2(model)

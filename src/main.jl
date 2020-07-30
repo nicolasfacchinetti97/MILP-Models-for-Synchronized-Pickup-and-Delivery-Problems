@@ -30,11 +30,12 @@ function load_conf(filename)
     result_name = dict["result_name"]
     read_n_node = dict["read_n_node"]
     max_seconds = dict["max_seconds"]
-    return pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name, read_n_node, max_seconds
+    out_name = dict["out_name"]
+    return pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name, read_n_node, max_seconds, out_name
 end
 
 # parameters
-pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name, read_n_node, max_seconds = load_conf("conf.toml")
+pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name, read_n_node, max_seconds, out_name = load_conf("conf.toml")
 
 # parse the files to obtain the coords
 println("Starting...\nParse points files.")
@@ -43,6 +44,11 @@ pck_points, dlv_points = parse_files(file_dir, pck_file, dlv_file, read_n_node)
 # get distance matrix from the points
 println("Compute distance matrix from points coords.")
 pck_matrix, dlv_matrix = get_distance_matrices(pck_points, dlv_points, to_round)
+
+# check if the max number of nodes is > than the number of node of the instance
+if size(pck_matrix, 1) <= read_n_node
+    read_n_node = size(pck_matrix, 1)
+end
 
 # get the base MILP model of the problem (only constraints 1-3)
 println("Get the base model of the problem.")
@@ -57,7 +63,10 @@ println("Initial cost pickup $pi_tour, initial cost delivery $di_tour")
 
 # check and iteratively add the violated constraints 4 untill the are no more anomalies
 println("-"^30, " Checking violated constraints ", "-"^30)
-model = add_violated_constraints(model, x1, x2, pck_k, dlv_k, max_seconds)
+model, time = add_violated_constraints(model, x1, x2, pck_k, dlv_k, max_seconds)
+
+# save the result of the instance
+save_instance(out_name, pck_file, model, read_n_node, pck_k, dlv_k, time)
 
 pf_tour, df_tour, x1f, x2f = get_values(model)
 println("Final cost pickup $pf_tour, final cost delivery $df_tour")
