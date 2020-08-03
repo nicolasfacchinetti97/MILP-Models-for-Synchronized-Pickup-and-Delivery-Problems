@@ -74,14 +74,16 @@ function build_model(pck_matrix, dlv_matrix, print_log, dump)
 end
 
 
-function solve(model)
+function solve(model, dump)
     """
     Solve the given model
 
     Parameters
     ---------
     model: Model
-        MILP model of the problem    
+        MILP model of the problem
+    dump: boolean
+        dump the model or not   
     Return
     ---------
     pck_tour
@@ -99,6 +101,9 @@ function solve(model)
     cost_dlv = model[:cost_dlv]    
     x1 = model[:x1]
     x2 = model[:x2]
+    if dump
+        JuMP.write_to_file(model, "progress_dump.lp")
+    end
     if termination_status(model) == MOI.OPTIMAL
         pck_tour = value(cost_pck)
         dlv_tour = value(cost_dlv)
@@ -252,6 +257,25 @@ function get_x1_x2_n(model)
 	return x1, x2, n
 end
 
+function get_y1_y2(model)
+	"get y1 and y2 
+	
+	Parameters
+	----------
+	model: Model
+		MILP model of the probel
+	Return
+	----------
+	Float64
+		pck matrix (y1)
+	Float64
+		dlv matrix (y2)
+	"
+	y1 = model[:y1]
+    y2 = model[:y2]
+	return y1, y2
+end
+
 function add_no_permutation_overlap_constraint(model)
     """
     Add the constraint 16 - 17 to the model
@@ -273,9 +297,9 @@ function add_no_permutation_overlap_constraint(model)
 	return model
 end
 
-function add_no_permutation_no_overlap_constraint(model)
+function add_y_constraints(model)
     """
-    Add the constraints 16-17, 6-13, 24
+    Add the constraint from 6 to 14 to the model
 
     Parameters
     ----------
@@ -286,7 +310,6 @@ function add_no_permutation_no_overlap_constraint(model)
     Model
         the model with the added constraints
     """
-    model = add_no_permutation_overlap_constraint(model)
     x1, x2, n = get_x1_x2_n(model)
 
     @variables(model, begin                         # precedence variables
@@ -303,7 +326,60 @@ function add_no_permutation_no_overlap_constraint(model)
     @constraint(model, c8_pck[v in 2:n, w in 2:n], y1[v,w] + x1[w,v] <= 1)
     @constraint(model, c8_dlv[v in 2:n, w in 2:n], y2[v,w] + x2[w,v] <= 1)
 
+    @constraint(model, c9_pck[u in 2:n, v in 2:n, w in 2:n], y1[u,v] + y1[v,u] + y1[v,w] + y1[w,v] + y1[u,w] + y1[w,u] >= 0)
+    @constraint(model, c9_dlv[u in 2:n, v in 2:n, w in 2:n], y2[u,v] + y2[v,u] + y2[v,w] + y2[w,v] + y2[u,w] + y2[w,u] >= 0)
 
+    @constraint(model, c10_pck[u in 2:n, v in 2:n, w in 2:n], y1[u,v] + y1[v,w] - y1[u,w] <= 1)
+    @constraint(model, c10_dlv[u in 2:n, v in 2:n, w in 2:n], y2[u,v] + y2[v,w] - y2[u,w] <= 1)
+
+    @constraint(model, c11_pck[v in 2:n, w in 2:n], x1[1,v] + x1[1,w] - y1[v,w] - y1[w,v] <= 1)
+    @constraint(model, c11_dlv[v in 2:n, w in 2:n], x2[1,v] + x2[1,w] - y2[v,w] - y2[w,v] <= 1)
+
+    @constraint(model, c12_pck[u in 2:n, v in 2:n, w in 2:n], y1[u,v] + x1[v,w] - y1[u,w] <= 1)
+    @constraint(model, c12_dlv[u in 2:n, v in 2:n, w in 2:n], y2[u,v] + x2[v,w] - y2[u,w] <= 1)
     
+    @constraint(model, c13_pck[u in 2:n, v in 2:n, w in 2:n], y1[u,v] + x1[u,w] - y1[w,v] <= 1)
+    @constraint(model, c13_dlv[u in 2:n, v in 2:n, w in 2:n], y2[u,v] + x2[u,w] - y2[w,v] <= 1)
 
+    return model
+end
+
+function add_no_overlap_constraint(model)
+    """
+    Add the constraint 24 to obtain the no overal variant
+
+    Parameters
+    ----------
+    model:
+        base MILP model of the probel
+    Return
+    ----------
+    Model
+        the model with the added constraints
+    """
+    x1, x2, n = get_x1_x2_n(model)
+    y1, y2 = get_y1_y2(model)
+
+    @constraint(model, c24[u in 2:n, v in 2:n], 2(y2[u,v] + y2[v,u]) >= y1[u,v] + y1[v,u])
+
+    return model
+end
+
+function add_no_permutation_no_overlap_constraint(model)
+    """
+    Add the constraints 16-17, 6-13, 24
+
+    Parameters
+    ----------
+    model:
+        base MILP model of the probel
+    Return
+    ----------
+    Model
+        the model with the added constraints
+    """
+    model = add_no_permutation_overlap_constraint(model)
+    model = add_y_constraints(model)
+    model = add_no_overlap_constraint(model)
+    return model
 end

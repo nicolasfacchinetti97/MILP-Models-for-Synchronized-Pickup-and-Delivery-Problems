@@ -126,7 +126,7 @@ function add_violated_constraint(model, anomaly, capacity, problem_type)
      
     model = add_dynamic_constraint(model, nodes, capacity, problem_type)
     p_tour, d_tour, x1, x2 = try
-        solve(model)
+        solve(model, true)
     catch e
         println(e.msg)
     end
