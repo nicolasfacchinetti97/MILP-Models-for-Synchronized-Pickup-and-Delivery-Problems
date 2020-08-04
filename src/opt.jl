@@ -73,6 +73,32 @@ function build_model(pck_matrix, dlv_matrix, time, print_log, dump)
         JuMP.write_to_file(m, "init_dump.lp")
     end
 
+    # set the function to call to fix the anomalies
+    function callback_check_constraints(cb_data)
+        #(Ref(cb_data), x)
+        m_pck = callback_value.(Ref(cb_data), x1)
+        m_dlv = callback_value.(Ref(cb_data), x2)
+    
+        println("Checking for violated constraints")
+    
+        res_pck = detect_anomalies_in_tour(m_pck, k_pck)
+        if res_pck == 0
+            println("No anomalies in pickup")
+        else
+            println("Find an anomaly in pickup tour!")
+            model = add_violated_constraint(model, cb_data, res_pck, k_pck, 1)
+        end
+    
+        res_dlv = detect_anomalies_in_tour(m_dlv, k_dlv)
+        if res_dlv == 0
+            println("No anomalies in delivery")
+        else
+            println("Find an anomaly in delivery tour!")
+            model = add_violated_constraint(model, cb_data, res_dlv, k_dlv, 2)
+        end
+    end
+    MOI.set(m, MOI.LazyConstraintCallback(), callback_check_constraints)
+
     return m
 end
 
@@ -189,7 +215,7 @@ function get_values(model)
     return pck_tour, dlv_tour, x1, x2
 end
 
-function add_dynamic_constraint(model, S, k, type)
+function add_dynamic_constraint(model, cb_data, S, k, type)
     """
     Add dynamically the constraint (4) to a given model resricted to a set of nodes
     
@@ -211,11 +237,11 @@ function add_dynamic_constraint(model, S, k, type)
     bound = ceil(length(S)/k)                           # round the division to the upper integer
     x1, x2, n = get_x1_x2_n(model)
     if type == 1
-        @constraint(model, sum(x1[j,v] for v in 1:n, j in S if v ∉ S) >= bound)
+        con = @build_constraint(sum(x1[j,v] for v in 1:n, j in S if v ∉ S) >= bound)
     else
-        @constraint(model, sum(x2[j,v] for v in 1:n, j in S if v ∉ S) >= bound)
+        con = @build_constraint(sum(x2[j,v] for v in 1:n, j in S if v ∉ S) >= bound)
     end
-    return model  
+    MOI.submit(model, MOI.LazyConstraint(cb_data), con)
 end
 
 function get_opt(model)

@@ -72,9 +72,9 @@ println("Initial cost pickup $pi_tour, initial cost delivery $di_tour")
 
 
 # check and iteratively add the violated constraints 4 untill the are no more anomalies
-println("-"^30, " Checking violated constraints ", "-"^30)
-model, time = add_violated_constraints(model, x1, x2, pck_k, dlv_k)
-
+#println("-"^30, " Checking violated constraints ", "-"^30)
+#model, time = add_violated_constraints(model, x1, x2, pck_k, dlv_k)
+time = 10
 # save the result of the instance
 save_instance(out_name, pck_file, model, read_n_node, pck_k, dlv_k, time)
 

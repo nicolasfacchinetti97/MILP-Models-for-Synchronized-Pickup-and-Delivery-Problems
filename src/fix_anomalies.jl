@@ -97,7 +97,7 @@ function find_connected_excluded_elements(matrix)
     return tours, excluded
 end
 
-function add_violated_constraint(model, anomaly, capacity, problem_type)
+function add_violated_constraint(model, cb_data, anomaly, capacity, problem_type)
     """
     get an anomaly in the pickup or delivery problem and add the corresponding constraint to the model
 
@@ -124,15 +124,7 @@ function add_violated_constraint(model, anomaly, capacity, problem_type)
     
     println("Type $type anomaly, set of nodes that violate the constraint 4: $nodes")
      
-    model = add_dynamic_constraint(model, nodes, capacity, problem_type)
-    p_tour, d_tour, x1, x2 = try
-        solve(model, true)
-    catch e
-        println(e.msg)
-    end
-    println("New cost pickup $p_tour, new cost delivery $d_tour")
-
-    return model
+    model = add_dynamic_constraint(model, cb_data, nodes, capacity, problem_type)
 end
 
 function print_arr(arr)
