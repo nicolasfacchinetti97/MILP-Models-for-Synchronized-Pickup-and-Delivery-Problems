@@ -3,48 +3,20 @@ include("opt.jl")
 include("fix_anomalies.jl")
 include("io.jl")
 
-using TOML
-
-function load_conf(filename)
-    """
-    Load the parameters of the program from a file
-
-    Parameters
-    ---------
-    filename: string
-        the name of the config filem with his relative path
-    Return
-    ---------
-    tuple
-        all the parameters of the program
-    """
-    dict = TOML.parsefile(filename)
-    pck_k = dict["pck_k"]
-    dlv_k = dict["dlv_k"]
-    file_dir = dict["file_dir"]
-    pck_file = dict["pck_file"]
-    dlv_file = dict["dlv_file"]
-    to_round = dict["to_round"]
-    print_log = dict["print_log"]
-    model_dump = dict["model_dump"]
-    save_dot = dict["save_dot"]
-    result_name = dict["result_name"]
-    read_n_node = dict["read_n_node"]
-    max_seconds = dict["max_seconds"]
-    out_name = dict["out_name"]
-    overlap = dict["overlap"]
-    return pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name, read_n_node, max_seconds, out_name, overlap
-end
-
 # parameters
-pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name, read_n_node, max_seconds, out_name, overlap = load_conf("conf.toml")
+config.load_conf("conf.toml")
 
 # parse the files to obtain the coords
 println("Starting...\nParse points files.")
+file_dir = config.get_file_dir()
+pck_file = config.get_pck_file()
+dlv_file = config.get_dlv_file()
+read_n_node = config.get_read_n_nodes()
 pck_points, dlv_points = parse_files(file_dir, pck_file, dlv_file, read_n_node)
 
 # get distance matrix from the points
 println("Compute distance matrix from points coords.")
+to_round = config.get_to_round()
 pck_matrix, dlv_matrix = get_distance_matrices(pck_points, dlv_points, to_round)
 
 # check if the max number of nodes is > than the number of node of the instance
@@ -52,10 +24,13 @@ if size(pck_matrix, 1) <= read_n_node
     read_n_node = size(pck_matrix, 1)
 end
 
+print_log = config.get_print_log()
+model_dump = config.get_model_dump()
 # get the base MILP model of the problem (only constraints 1-3)
 println("Get the base model of the problem.")
 model = build_model(pck_matrix, dlv_matrix, print_log, model_dump)
 
+overlap = config.get_overlap()
 println("Setup the model for overlapping sequence: $overlap.")
 if overlap
     model = add_no_permutation_overlap_constraint(model)
@@ -70,12 +45,15 @@ catch e
 end  
 println("Initial cost pickup $pi_tour, initial cost delivery $di_tour")
 
-
+pck_k = config.get_pck_k()
+dlv_k = config.get_dlv_k()
+max_seconds = config.get_max_seconds()
 # check and iteratively add the violated constraints 4 untill the are no more anomalies
 println("-"^30, " Checking violated constraints ", "-"^30)
 model, time = add_violated_constraints(model, x1, x2, pck_k, dlv_k, max_seconds)
 
 # save the result of the instance
+out_name = config.get_out_name()
 save_instance(out_name, pck_file, model, read_n_node, pck_k, dlv_k, time)
 
 pf_tour, df_tour, x1f, x2f = get_values(model)
@@ -95,12 +73,14 @@ else
 end
 
 # export solution to dot file
+save_dot = config.get_save_dot()
 if save_dot
     create_dot_file(x1f, "pck.dot")
     create_dot_file(x2f, "dlv.dot")
     println("Saved .dot files.\n")
 end
 
+result_name = config.get_result_name()
 println("Saving the results to file: $result_name")
 save_solution(model, result_name)
 

@@ -1,3 +1,80 @@
+module config
+    using TOML
+
+    conf = Dict()
+
+    function load_conf(filename)
+        """
+        Load the parameters of the program from a file
+
+        Parameters
+        ---------
+        filename: string
+            the name of the config filem with his relative path
+        """
+        global conf = TOML.parsefile(filename)
+    end
+
+    function get_pck_k()
+        return conf["pck_k"]
+    end
+
+    function get_dlv_k()
+        return conf["dlv_k"]
+    end
+
+    function get_file_dir()
+        return conf["file_dir"]
+    end  
+        
+    function get_pck_file()
+        return conf["pck_file"]
+    end
+
+    function get_dlv_file()
+        return conf["dlv_file"]
+    end
+
+    function get_to_round()
+        return conf["to_round"]
+    end
+
+    function get_file_dir()
+        return conf["file_dir"]
+    end
+
+    function get_print_log()
+        return conf["print_log"]
+    end  
+    
+    function get_model_dump()
+        return conf["model_dump"]
+    end  
+
+    function get_save_dot()
+        return conf["save_dot"]
+    end
+    
+    function get_result_name()
+        return conf["result_name"]
+    end
+
+    function get_read_n_nodes()
+        return conf["read_n_nodes"]
+    end
+
+    function get_max_seconds()
+        return conf["max_seconds"]
+    end
+
+    function get_out_name()
+        return conf["out_name"]
+    end
+
+    function get_overlap()
+        return conf["overlap"]
+    end
+end
 
 function save_instance(filename, name, model, n, k_p, k_d, time)
     """
