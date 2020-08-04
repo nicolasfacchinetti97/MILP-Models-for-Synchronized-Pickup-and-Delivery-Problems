@@ -289,11 +289,17 @@ function add_no_permutation_overlap_constraint(model)
     Model
         the model with the added constraints
     """
-	x1, x2, n = get_x1_x2_n(model)
-    @constraint(model, c16_1[v in 2:n, w in 2:n], 2x1[v,w] <= 2x2[v,w] + x2[v,1] + x2[1,w])
-    @constraint(model, c16_2[v in 2:n, w in 2:n], 2x2[v,w] <= 2x1[v,w] + x1[v,1] + x1[1,w])
-    @constraint(model, c17_1[v in 2:n, w in 2:n], 2x1[v,1] + 2x1[1,w] <= 2 + 2x2[v,w] + x2[v,1] + x2[1,w])
-	@constraint(model, c17_2[v in 2:n, w in 2:n], 2x2[v,1] + 2x2[1,w] <= 2 + 2x1[v,w] + x1[v,1] + x1[1,w])
+    x1, x2, n = get_x1_x2_n(model)
+    for v in 2:n
+        for w in 2:n
+            if v != w
+                @constraint(model, 2x1[v,w] <= 2x2[v,w] + x2[v,1] + x2[1,w])
+                @constraint(model, 2x2[v,w] <= 2x1[v,w] + x1[v,1] + x1[1,w])
+                @constraint(model, 2x1[v,1] + 2x1[1,w] <= 2 + 2x2[v,w] + x2[v,1] + x2[1,w])
+                @constraint(model, 2x2[v,1] + 2x2[1,w] <= 2 + 2x1[v,w] + x1[v,1] + x1[1,w])
+            end
+        end
+    end
 	return model
 end
 
@@ -317,29 +323,37 @@ function add_y_constraints(model)
         y2[2:n, 2:n], (Bin)
     end)
 
-    @constraint(model, c6_pck[v in 2:n, w in 2:n], y1[v,w] + y1[w,v] <= 1)
-    @constraint(model, c6_dlv[v in 2:n, w in 2:n], y2[v,w] + y2[w,v] <= 1)
+    for u in 2:n    
+        for v in 2:n
+            for w in 2:n
+                if u != v && u != w && v != w
+                    @constraint(model, y1[v,w] + y1[w,v] <= 1)
+                    @constraint(model, y2[v,w] + y2[w,v] <= 1)
 
-    @constraint(model, c7_pck[v in 2:n, w in 2:n], y1[v,w] + x1[v,w] <= 1)
-    @constraint(model, c7_dlv[v in 2:n, w in 2:n], y2[v,w] + x2[v,w] <= 1)
+                    @constraint(model, y1[v,w] + x1[v,w] <= 1)
+                    @constraint(model, y2[v,w] + x2[v,w] <= 1)
 
-    @constraint(model, c8_pck[v in 2:n, w in 2:n], y1[v,w] + x1[w,v] <= 1)
-    @constraint(model, c8_dlv[v in 2:n, w in 2:n], y2[v,w] + x2[w,v] <= 1)
+                    @constraint(model, y1[v,w] + x1[w,v] <= 1)
+                    @constraint(model, y2[v,w] + x2[w,v] <= 1)
 
-    @constraint(model, c9_pck[u in 2:n, v in 2:n, w in 2:n], y1[u,v] + y1[v,u] + y1[v,w] + y1[w,v] + y1[u,w] + y1[w,u] >= 0)
-    @constraint(model, c9_dlv[u in 2:n, v in 2:n, w in 2:n], y2[u,v] + y2[v,u] + y2[v,w] + y2[w,v] + y2[u,w] + y2[w,u] >= 0)
+                    @constraint(model, y1[u,v] + y1[v,u] + y1[v,w] + y1[w,v] + y1[u,w] + y1[w,u] >= 0)
+                    @constraint(model, y2[u,v] + y2[v,u] + y2[v,w] + y2[w,v] + y2[u,w] + y2[w,u] >= 0)
 
-    @constraint(model, c10_pck[u in 2:n, v in 2:n, w in 2:n], y1[u,v] + y1[v,w] - y1[u,w] <= 1)
-    @constraint(model, c10_dlv[u in 2:n, v in 2:n, w in 2:n], y2[u,v] + y2[v,w] - y2[u,w] <= 1)
+                    @constraint(model, y1[u,v] + y1[v,w] - y1[u,w] <= 1)
+                    @constraint(model, y2[u,v] + y2[v,w] - y2[u,w] <= 1)
 
-    @constraint(model, c11_pck[v in 2:n, w in 2:n], x1[1,v] + x1[1,w] - y1[v,w] - y1[w,v] <= 1)
-    @constraint(model, c11_dlv[v in 2:n, w in 2:n], x2[1,v] + x2[1,w] - y2[v,w] - y2[w,v] <= 1)
+                    @constraint(model, x1[1,v] + x1[1,w] - y1[v,w] - y1[w,v] <= 1)
+                    @constraint(model, x2[1,v] + x2[1,w] - y2[v,w] - y2[w,v] <= 1)
 
-    @constraint(model, c12_pck[u in 2:n, v in 2:n, w in 2:n], y1[u,v] + x1[v,w] - y1[u,w] <= 1)
-    @constraint(model, c12_dlv[u in 2:n, v in 2:n, w in 2:n], y2[u,v] + x2[v,w] - y2[u,w] <= 1)
-    
-    @constraint(model, c13_pck[u in 2:n, v in 2:n, w in 2:n], y1[u,v] + x1[u,w] - y1[w,v] <= 1)
-    @constraint(model, c13_dlv[u in 2:n, v in 2:n, w in 2:n], y2[u,v] + x2[u,w] - y2[w,v] <= 1)
+                    @constraint(model, y1[u,v] + x1[v,w] - y1[u,w] <= 1)
+                    @constraint(model, y2[u,v] + x2[v,w] - y2[u,w] <= 1)
+                    
+                    @constraint(model, y1[u,v] + x1[u,w] - y1[w,v] <= 1)
+                    @constraint(model, y2[u,v] + x2[u,w] - y2[w,v] <= 1)
+                end
+            end
+        end
+    end
 
     return model
 end
@@ -360,7 +374,13 @@ function add_no_overlap_constraint(model)
     x1, x2, n = get_x1_x2_n(model)
     y1, y2 = get_y1_y2(model)
 
-    @constraint(model, c24[u in 2:n, v in 2:n], 2(y2[u,v] + y2[v,u]) >= y1[u,v] + y1[v,u])
+    for u in 2:n
+        for v in 2:n
+            if u != v
+                @constraint(model, 2(y2[u,v] + y2[v,u]) >= y1[u,v] + y1[v,u])
+            end
+        end
+    end
 
     return model
 end
