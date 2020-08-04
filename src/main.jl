@@ -32,11 +32,12 @@ function load_conf(filename)
     read_n_node = dict["read_n_node"]
     max_seconds = dict["max_seconds"]
     out_name = dict["out_name"]
-    return pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name, read_n_node, max_seconds, out_name
+    overlap = dict["overlap"]
+    return pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name, read_n_node, max_seconds, out_name, overlap
 end
 
 # parameters
-pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name, read_n_node, max_seconds, out_name = load_conf("conf.toml")
+pck_k, dlv_k, file_dir, pck_file, dlv_file, to_round, print_log, model_dump, save_dot, result_name, read_n_node, max_seconds, out_name, overlap = load_conf("conf.toml")
 
 # parse the files to obtain the coords
 println("Starting...\nParse points files.")
@@ -55,7 +56,12 @@ end
 println("Get the base model of the problem.")
 model = build_model(pck_matrix, dlv_matrix, print_log, model_dump)
 
-model = add_no_permutation_overlap_constraint(model)
+println("Setup the model for overlapping sequence: $overlap.")
+if overlap
+    model = add_no_permutation_overlap_constraint(model)
+else
+    model = add_no_permutation_no_overlap_constraint(model)
+end
 
 pi_tour, di_tour, x1, x2 = try
     solve(model, false)

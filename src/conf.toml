@@ -11,3 +11,4 @@ result_name = "result.txt"              # filename used to write the instance so
 read_n_node = 6                        # max number of nodes to read from files
 max_seconds = 3600                       # max seconds to wait for a opt solution
 out_name = "out.txt"                    # filename used to save the result of all the instances
+overlap = false                         # flavor of the problem
