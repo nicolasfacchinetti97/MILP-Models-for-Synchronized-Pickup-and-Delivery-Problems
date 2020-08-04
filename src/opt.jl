@@ -75,7 +75,7 @@ function build_model(pck_matrix, dlv_matrix, time, print_log, dump)
 
     # set the function to call to fix the anomalies
     function callback_check_constraints(cb_data)
-        #(Ref(cb_data), x)
+        # need to add this strange syntex since cannot extract multiple variables from cb_data
         m_pck = callback_value.(Ref(cb_data), x1)
         m_dlv = callback_value.(Ref(cb_data), x2)
     
