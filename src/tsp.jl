@@ -142,6 +142,7 @@ function check_solution_integrity(pck_m, dlv_m, pck_k, dlv_k)
     boolean
         a boolean stating that if the solutions are valid or not
     """
+    # TODO add check FIFO
     println("Checking pickup solution integrity...")
     pck = check_integrity(pck_m, pck_k)
     println("Checking delivery solution integrity...")
@@ -151,7 +152,9 @@ end
 
 function check_integrity(matrix, capacity)
     """
-    Checking the integrity of a solution, all the nodes are in a tour and capacity not exceed the veichle one's
+    Checking the integrity of a solution:
+        - all the nodes are in a tour
+        - capacity not exceed the veichle one's
 
     Parameters
     ---------

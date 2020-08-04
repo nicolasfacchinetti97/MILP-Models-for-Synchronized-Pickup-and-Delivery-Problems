@@ -23,7 +23,6 @@ save_dot = config.get_save_dot()
 result_name = config.get_result_name()
 
 
-
 # parse the files to obtain the coords
 println("Parse points files.")
 pck_points, dlv_points = parse_files(file_dir, pck_file, dlv_file, read_n_node)
@@ -48,15 +47,19 @@ else
     model = add_no_permutation_no_overlap_constraint(model)
 end
 
-pi_tour, di_tour, x1, x2 = try
+pi_tour, di_tour, x1, x2, time = try
     solve(model, false)
 catch e
     println(e.msg)
+    # TODO add the call to the heuristic to fix the sequence
+    1, 2, [0 0 1
+    1 0 0
+    0 1 0], [0 0 1
+    1 0 0
+    0 1 0], max_seconds
 end  
-println("Cost pickup: $pi_tour, cost delivery: $di_tour")
+println("Cost pickup: $pi_tour, cost delivery: $di_tour.\n")
 
-
-time = 10
 # save the result of the instance
 save_instance(out_name, pck_file, model, read_n_node, pck_k, dlv_k, time)
 

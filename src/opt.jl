@@ -112,14 +112,16 @@ function solve(model, dump)
         dump the model or not   
     Return
     ---------
-    pck_tour
+    int
         the cost of the pickup tour
-    dlv_tour
+    int
         the cost of the delivery tour
-    x1
+    Array{Float64, 2}
         matrices of the choosen arches in the pickup tour
-    x2
+    Array{Float64, 2}
         matrices of the choosen arches in the delivery tour
+    Float64
+        the solve time reported by the solver
     """
     # Solving the optimization problem
     optimize!(model)
@@ -135,13 +137,15 @@ function solve(model, dump)
         dlv_tour = value(cost_dlv)
         x1 = value.(x1)
         x2 = value.(x2)
-        return pck_tour, dlv_tour, x1, x2
+        t = solve_time(model)
+        return pck_tour, dlv_tour, x1, x2, t
     elseif termination_status(model) == MOI.TIME_LIMIT && has_values(model)
         pck_tour = value(cost_pck)
         dlv_tour = value(cost_dlv)
         x1 = value.(x1)
         x2 = value.(x2)
-        return pck_tour, dlv_tour, x1, x2
+        t = solve_time(model)
+        return pck_tour, dlv_tour, x1, x2, t
     else
         error("The model was not solved correctly.")
     end  
@@ -257,7 +261,7 @@ function get_opt(model)
         lower boun
     """
     optimal_objective = objective_value(model)
-    optimal_bound =  objective_bound(model)
+    optimal_bound = objective_bound(model)
     return optimal_objective, optimal_bound
 end
 
