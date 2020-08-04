@@ -3,7 +3,7 @@ using JuMP
 using CPLEX
 using DelimitedFiles
 
-function build_model(pck_matrix, dlv_matrix, time, print_log, dump)
+function build_model(pck_matrix, dlv_matrix, time, print_log)
     """
     Build the base optimization problem with only 1 - 2 - 3 constraint
 
@@ -17,8 +17,6 @@ function build_model(pck_matrix, dlv_matrix, time, print_log, dump)
         sets the time limit (in seconds) of the solver
     print_log: boolean
         true if want the log of CPLEX, false otherwise
-    dump: boolean
-        true if want to dump the model to .lp file
     Return
     ---------
     Model
@@ -68,10 +66,6 @@ function build_model(pck_matrix, dlv_matrix, time, print_log, dump)
     # no self loop
     @constraint(model, no_self_pck[i in 1:n], x1[i,i] == 0)
     @constraint(model, no_self_dlv[i in 1:n], x2[i,i] == 0)
-
-    if dump
-        JuMP.write_to_file(model, "init_dump.lp")
-    end
 
     # set the function to call to fix the anomalies
     function callback_check_constraints(cb_data)

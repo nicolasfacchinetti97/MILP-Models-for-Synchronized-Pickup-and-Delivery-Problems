@@ -38,7 +38,7 @@ end
 
 # get the base MILP model of the problem (only constraints 1-3)
 println("Get the base model of the problem.")
-model = build_model(pck_matrix, dlv_matrix, max_seconds, print_log, model_dump)
+model = build_model(pck_matrix, dlv_matrix, max_seconds, print_log)
 
 println("Setup the model for overlapping sequence? $overlap.")
 if overlap
@@ -46,6 +46,10 @@ if overlap
 else
     model = add_no_permutation_no_overlap_constraint(model)
 end
+
+# if model_dump
+#     JuMP.write_to_file(model, "init_dump.lp")
+# end
 
 pi_tour, di_tour, x1, x2, time = try
     solve(model, false)
