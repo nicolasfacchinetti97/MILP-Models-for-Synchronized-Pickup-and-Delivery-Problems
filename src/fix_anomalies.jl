@@ -166,3 +166,68 @@ function check_constraints(model, m, k, type)
         return con
     end
 end
+
+function fix_model_with_heuristic(model, k_pck, k_dlv)
+    x1, x2, n = get_x1_x2_n(model)
+
+    println("Fixing pickup tour...")
+    x1 = fix_tours_heuristic(x1, k_pck)
+
+    println("Fixing delivery tour...")
+    x2 = fix_tours_heuristic(x2, k_dlv)
+    
+    # asseganre x1 e x2 a modello
+
+    return model    
+end
+
+function fix_tours_heuristic(matrix, k)
+    tours, excluded = find_connected_excluded_elements(matrix)
+    print_arr(matrix)
+    while length(excluded) > 0
+        matrix = fix_excluded_elements(matrix, excluded)
+        tours, excluded = find_connected_excluded_elements(matrix)
+    end
+
+    print_arr(matrix)
+    tours_e = [tour for tour in tours if length(tour) > k]
+    while length(tours_e) > 0
+        matrix = fix_tours_exceed_capacity(matrix, tours, k)
+        tours, excluded = find_connected_excluded_elements(matrix)
+        tours_e = [tour for tour in tours if length(tour) > k]
+    end
+    print_arr(matrix)
+
+end
+
+function fix_tours_exceed_capacity(matrix, tours, k)
+    for tour in tours
+        if length(tour) > k
+            matrix = add_source_to_tour(matrix, tour[1], tour[k])
+        end
+    end
+
+    return matrix
+end
+
+function fix_excluded_elements(matrix, elements)
+    node = elements[1]
+    tour = find_tour(node, node, matrix)
+    first = tour[1]
+    last = tour[end]
+
+    matrix = add_source_to_tour(matrix, first, last)
+
+    println("Added the tour starting from source with nodes: $tour")
+    return matrix
+end
+
+function add_source_to_tour(matrix, first, last)
+    matrix[1, first] = 1
+    matrix[last, 1] = 1
+    for i in 2:size(matrix, 1)
+        matrix[last, i] = 0
+    end
+
+    return matrix
+end
