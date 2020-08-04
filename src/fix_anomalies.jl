@@ -97,9 +97,9 @@ function find_connected_excluded_elements(matrix)
     return tours, excluded
 end
 
-function add_violated_constraint(model, cb_data, anomaly, capacity, problem_type)
+function get_violated_constraint(model, anomaly, capacity, problem_type)
     """
-    get an anomaly in the pickup or delivery problem and add the corresponding constraint to the model
+    from an anomaly in the pickup or delivery problem get the corresponding violated constraint
 
     Parameters
     ---------
@@ -116,15 +116,18 @@ function add_violated_constraint(model, cb_data, anomaly, capacity, problem_type
         1 for pickup, 2 for delivery
     Return
     ---------
-    Model:
-        model of the problem with the added constraint
+    constraint:
+        the previous violated constraint
     """
     type = anomaly[1]
     nodes = anomaly[2]
     
-    println("Type $type anomaly, set of nodes that violate the constraint 4: $nodes")
-     
-    model = add_dynamic_constraint(model, cb_data, nodes, capacity, problem_type)
+    println("Find a type $type anomaly, set of nodes that violate the constraint 4: $nodes")
+    
+    # get the constraint
+    con = get_dynamic_constraint(model, nodes, capacity, problem_type)
+    
+    return con
 end
 
 function print_arr(arr)
@@ -132,59 +135,34 @@ function print_arr(arr)
     println()
 end
 
-function add_violated_constraints(model, m_pck, m_dlv, k_pck, k_dlv)
+function check_constraints(model, m, k, type)
     """
-    search repeatedly for anomalies in the pickup and delivery tour and add them to the model
+    check the model if violate on of the constraint (4); if yes return the constraint, 0 otherwise
+
 
     Parameters
     ---------
     model: Model
         MILP model of the problem
-    m_pck: Array{Int64, 2}
-        matrix of the arches for the pickup
-    m_dlv: Array{Int64, 2}
-        matrix of the arches for the delivery
-    k_pck: int
-        capacity of the pickup veichle
-    k_dlv: int
-        capacity of the delivery veichle
+    m: Array{Int64, 2}
+        matrix of the arches describing the graph
+    k: int
+        capacity of the veichle
+    type: int
+        1 for pickup, 2 for delivery
     Return
     ---------
-    Model:
-        final MILP model with all the constraint of type 4
+    con:
+        a violated constraint of type 4
     int:
-        milliseconds to find the solution
+        0 if no violated constraint finded
     """
-    start = Dates.now()
-    while true
-        done_pck = false
-        done_dlv = false
-
-        res_pck = detect_anomalies_in_tour(m_pck, k_pck)
-        if res_pck == 0
-            println("No more anomalies in pickup")
-            done_pck = true
-        else
-            println("Find an anomaly in pickup tour!")
-            model = add_violated_constraint(model, res_pck, k_pck, 1)
-        end
-
-        res_dlv = detect_anomalies_in_tour(m_dlv, k_dlv)
-        if res_dlv == 0
-            println("No more anomalies in delivery")
-            done_dlv = true
-        else
-            println("Find an anomaly in delivery tour!")
-            model = add_violated_constraint(model, res_dlv, k_dlv, 2)
-        end
-        println("\n")
-        
-        elapsed = (Dates.now() - start).value                    # check how much time is passed from start
-        if done_pck && done_dlv
-            return model, elapsed
-        else
-            m_pck = get_x1(model)
-            m_dlv = get_x2(model)
-        end
+    res = detect_anomalies_in_tour(m, k)
+    if res == 0
+        println("No anomalies in tour")
+        return 0
+    else
+        con = get_violated_constraint(model, res, k, type)
+        return con
     end
 end

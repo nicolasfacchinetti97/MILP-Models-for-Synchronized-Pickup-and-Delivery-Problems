@@ -1,6 +1,5 @@
 module config
     using TOML
-
     conf = Dict()
 
     function load_conf(filename)

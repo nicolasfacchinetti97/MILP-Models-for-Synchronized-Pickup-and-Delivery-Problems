@@ -25,81 +25,78 @@ function build_model(pck_matrix, dlv_matrix, time, print_log, dump)
         the base MILP model of the problem
     """
     n = size(pck_matrix, 1)                         # get dimension of the matrix (number nodes)
-    m = Model(CPLEX.Optimizer)                      # get a model with CPLEX as Optimizer
-    set_time_limit_sec(m, time)
-    set_optimizer_attribute(m, "CPX_PARAM_SCRIND", print_log)
+    model = Model(CPLEX.Optimizer)                      # get a model with CPLEX as Optimizer
+    set_time_limit_sec(model, time)
+    set_optimizer_attribute(model, "CPX_PARAM_SCRIND", print_log)
     # _____________________________________ VARIABLES _____________________________________
     # we have a variable x for every possible arc, 1 for pck, 2 for delivery
-    @variables(m, begin
+    @variables(model, begin
         x1[1:n, 1:n], (Bin)                      
         x2[1:n, 1:n], (Bin)
     end)                           # Bin for binary variables, n x n arcs
 
     # cost of the two trips
-    @variables(m, begin
+    @variables(model, begin
         cost_pck
         cost_dlv
     end)
 
     # _____________________________________ OBJECTIVE _____________________________________
     # Compute the objective as the sum of the two tour
-    sum_trip = @expression(m, cost_pck + cost_dlv)
-    @objective(m, Min, sum_trip)
+    sum_trip = @expression(model, cost_pck + cost_dlv)
+    @objective(model, Min, sum_trip)
     
     # _____________________________________ CONSTRAINT _____________________________________
     # constraint 1: outgoing archs = incoming archs from source: x_t(δ+(0)) = x_t(δ−(0)) t = 1, 2
-    @constraint(m, c1_pck, sum(x1[1, v] for v in 1:n) == sum(x1[v, 1] for v in 1:n))
-    @constraint(m, c1_dlv, sum(x2[1, v] for v in 1:n) == sum(x2[v, 1] for v in 1:n))
+    @constraint(model, c1_pck, sum(x1[1, v] for v in 1:n) == sum(x1[v, 1] for v in 1:n))
+    @constraint(model, c1_dlv, sum(x2[1, v] for v in 1:n) == sum(x2[v, 1] for v in 1:n))
 
     # constraint 2: every vertex visited only once: x_t(δ+(v)) = 1 for v = 1, 2, ..., n, t = 1, 2
     # delta+ number of outgoing arcs:   δ+(S) = {(v, w) ∈ A: v ∈ S, w /∈ S}
-    @constraint(m, c2_pck[v1 in 2:n], sum(x1[v1, v2] for v2 in 1:n) == 1)
-    @constraint(m, c2_dlv[v1 in 2:n], sum(x2[v1, v2] for v2 in 1:n) == 1)
+    @constraint(model, c2_pck[v1 in 2:n], sum(x1[v1, v2] for v2 in 1:n) == 1)
+    @constraint(model, c2_dlv[v1 in 2:n], sum(x2[v1, v2] for v2 in 1:n) == 1)
 
     # constraint 3: every vertex visited only once: x_t(δ-(v)) = 1 for v = 1, 2, ..., n, t = 1, 2
     # delta- number of incoming arcs:   δ-(S) = {(v, w) ∈ A: v /∈ S, w ∈ S}    
-    @constraint(m, c3_pck[v2 in 2:n], sum(x1[v1, v2] for v1 in 1:n) == 1)
-    @constraint(m, c3_dlv[v2 in 2:n], sum(x2[v1, v2] for v1 in 1:n) == 1)
+    @constraint(model, c3_pck[v2 in 2:n], sum(x1[v1, v2] for v1 in 1:n) == 1)
+    @constraint(model, c3_dlv[v2 in 2:n], sum(x2[v1, v2] for v1 in 1:n) == 1)
 
     # calculate cost of the tour for pck and dlv
-    @constraint(m, pckcost, sum(pck_matrix[i,j] * x1[i,j] for i in 1:n, j in 1:n) == cost_pck)
-    @constraint(m, dlvcost, sum(dlv_matrix[i,j] * x2[i,j] for i in 1:n, j in 1:n) == cost_dlv)
+    @constraint(model, pckcost, sum(pck_matrix[i,j] * x1[i,j] for i in 1:n, j in 1:n) == cost_pck)
+    @constraint(model, dlvcost, sum(dlv_matrix[i,j] * x2[i,j] for i in 1:n, j in 1:n) == cost_dlv)
     
     # no self loop
-    @constraint(m, no_self_pck[i in 1:n], x1[i,i] == 0)
-    @constraint(m, no_self_dlv[i in 1:n], x2[i,i] == 0)
+    @constraint(model, no_self_pck[i in 1:n], x1[i,i] == 0)
+    @constraint(model, no_self_dlv[i in 1:n], x2[i,i] == 0)
 
     if dump
-        JuMP.write_to_file(m, "init_dump.lp")
+        JuMP.write_to_file(model, "init_dump.lp")
     end
 
     # set the function to call to fix the anomalies
     function callback_check_constraints(cb_data)
-        # need to add this strange syntex since cannot extract multiple variables from cb_data
+        # need to add this strange syntax since cannot extract multiple variables from cb_data
         m_pck = callback_value.(Ref(cb_data), x1)
         m_dlv = callback_value.(Ref(cb_data), x2)
-    
-        println("Checking for violated constraints")
-    
-        res_pck = detect_anomalies_in_tour(m_pck, k_pck)
-        if res_pck == 0
-            println("No anomalies in pickup")
-        else
-            println("Find an anomaly in pickup tour!")
-            model = add_violated_constraint(model, cb_data, res_pck, k_pck, 1)
-        end
-    
-        res_dlv = detect_anomalies_in_tour(m_dlv, k_dlv)
-        if res_dlv == 0
-            println("No anomalies in delivery")
-        else
-            println("Find an anomaly in delivery tour!")
-            model = add_violated_constraint(model, cb_data, res_dlv, k_dlv, 2)
-        end
-    end
-    MOI.set(m, MOI.LazyConstraintCallback(), callback_check_constraints)
+        k_pck = config.get_pck_k()
+        k_dlv = config.get_dlv_k()
 
-    return m
+        println("\nChecking for violated constraints in pickup")
+        res_pck = check_constraints(model, m_pck, k_pck, 1)
+        if res_pck != 0
+            MOI.submit(model, MOI.LazyConstraint(cb_data), res_pck)
+        end
+
+        println("Checking for violated constraints in delivery")
+        res_dlv = check_constraints(model, m_dlv, k_dlv, 2)
+        if res_dlv != 0
+            MOI.submit(model, MOI.LazyConstraint(cb_data), res_dlv)
+        end
+        
+    end
+
+    MOI.set(model, MOI.LazyConstraintCallback(), callback_check_constraints)
+    return model
 end
 
 
@@ -215,9 +212,9 @@ function get_values(model)
     return pck_tour, dlv_tour, x1, x2
 end
 
-function add_dynamic_constraint(model, cb_data, S, k, type)
+function get_dynamic_constraint(model, S, k, type)
     """
-    Add dynamically the constraint (4) to a given model resricted to a set of nodes
+    build the constraint (4) restricted to a set of nodes
     
     Parameters
     ---------
@@ -231,8 +228,8 @@ function add_dynamic_constraint(model, cb_data, S, k, type)
         1 for pickup, 2 for delivery
     Return
     ---------
-    Model
-        the given model with the added constraint
+    constraint
+        a new costraint to be added to the model
     """
     bound = ceil(length(S)/k)                           # round the division to the upper integer
     x1, x2, n = get_x1_x2_n(model)
@@ -241,7 +238,7 @@ function add_dynamic_constraint(model, cb_data, S, k, type)
     else
         con = @build_constraint(sum(x2[j,v] for v in 1:n, j in S if v ∉ S) >= bound)
     end
-    MOI.submit(model, MOI.LazyConstraint(cb_data), con)
+    return con
 end
 
 function get_opt(model)
