@@ -3,7 +3,7 @@ using JuMP
 using CPLEX
 using DelimitedFiles
 
-function build_model(pck_matrix, dlv_matrix, print_log, dump)
+function build_model(pck_matrix, dlv_matrix, time, print_log, dump)
     """
     Build the base optimization problem with only 1 - 2 - 3 constraint
 
@@ -13,6 +13,8 @@ function build_model(pck_matrix, dlv_matrix, print_log, dump)
         matrix of points distances of the pickup problem
     dlv_matrix: matrix
         matrix of points distances of the delivery problem
+    time: int
+        sets the time limit (in seconds) of the solver
     print_log: boolean
         true if want the log of CPLEX, false otherwise
     dump: boolean
@@ -24,6 +26,7 @@ function build_model(pck_matrix, dlv_matrix, print_log, dump)
     """
     n = size(pck_matrix, 1)                         # get dimension of the matrix (number nodes)
     m = Model(CPLEX.Optimizer)                      # get a model with CPLEX as Optimizer
+    set_time_limit_sec(m, time)
     set_optimizer_attribute(m, "CPX_PARAM_SCRIND", print_log)
     # _____________________________________ VARIABLES _____________________________________
     # we have a variable x for every possible arc, 1 for pck, 2 for delivery
