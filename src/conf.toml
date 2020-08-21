@@ -11,4 +11,6 @@ result_name = "result.txt"              # filename used to write the instance so
 read_n_nodes = 10                        # max number of nodes to read from files
 max_seconds = 40                       # max seconds to wait for a opt solution
 out_name = "out.txt"                    # filename used to save the result of all the instances
-overlap = true                         # flavor of the problem
+#flavor of the problem
+overlap = true                      
+permutation = 1                     # 1: no permutation, 2: permutation, 3: pickup permutation, 4: delivery permutation

@@ -21,7 +21,7 @@ max_seconds = config.get_max_seconds()
 out_name = config.get_out_name()
 save_dot = config.get_save_dot()
 result_name = config.get_result_name()
-
+permutation = config.get_permutation()
 
 # parse the files to obtain the coords
 println("Parse points files.")
@@ -40,11 +40,34 @@ end
 println("Get the base model of the problem.")
 model = build_model(pck_matrix, dlv_matrix, max_seconds, print_log)
 
+print("Flavor of the problem: ")
+if permutation == 1
+    println("no permutation.")
+elseif permutation == 2
+    println("permutation.")
+elseif permutation == 3
+    println("pickup permutation.")
+elseif permutation == 4
+    println("delivery permutation.")
+end
 println("Setup the model for overlapping sequence? $overlap.")
-if overlap
+
+if permutation == 1 && overlap
     model = add_no_permutation_overlap_constraint(model)
-else
+elseif permutation == 1 && !overlap
     model = add_no_permutation_no_overlap_constraint(model)
+elseif permutation == 2 && overlap
+    model = add_permutation_overlap_constraint(model)
+elseif permutation == 2 && !overlap
+    model = add_permutation_no_overlap_constraint(model)
+elseif permutation == 3 && overlap
+    model = add_pickup_permutation_overlap_constraint(model)
+elseif permutation == 3 && !overlap
+    model = add_pickup_permutation_no_overlap_constraint(model)
+elseif permutation == 4 && overlap
+    model = add_delivery_permutation_overlap_constraint(model)
+elseif permutation == 4 && !overlap
+    model = add_delivery_permutation_no_overlap_constraint(model)
 end
 
 # if model_dump
@@ -62,7 +85,7 @@ end
 println("Cost pickup: $pi_tour, cost delivery: $di_tour.\n")
 
 # save the result of the instance
-save_instance(out_name, pck_file, model, read_n_node, pck_k, dlv_k, time)
+save_instance(out_name, pck_file, permutation, overlap, model, read_n_node, pck_k, dlv_k, time)
 
 # if model_dump
 #     JuMP.write_to_file(model, "final_dump.lp")

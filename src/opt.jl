@@ -301,33 +301,6 @@ function get_y1_y2(model)
 	return y1, y2
 end
 
-function add_no_permutation_overlap_constraint(model)
-    """
-    Add the constraint 16 - 17 to the model
-    
-    Parameters
-    ----------
-    model:
-        base MILP model of the probel
-    Return
-    ----------
-    Model
-        the model with the added constraints
-    """
-    x1, x2, n = get_x1_x2_n(model)
-    for v in 2:n
-        for w in 2:n
-            if v != w
-                @constraint(model, 2x1[v,w] <= 2x2[v,w] + x2[v,1] + x2[1,w])
-                @constraint(model, 2x2[v,w] <= 2x1[v,w] + x1[v,1] + x1[1,w])
-                @constraint(model, 2x1[v,1] + 2x1[1,w] <= 2 + 2x2[v,w] + x2[v,1] + x2[1,w])
-                @constraint(model, 2x2[v,1] + 2x2[1,w] <= 2 + 2x1[v,w] + x1[v,1] + x1[1,w])
-            end
-        end
-    end
-	return model
-end
-
 function add_y_constraints(model)
     """
     Add the constraint from 6 to 14 to the model
@@ -416,6 +389,33 @@ function add_no_overlap_constraint(model)
     return model
 end
 
+function add_no_permutation_overlap_constraint(model)
+    """
+    Add the constraint 16 - 17 to the model
+    
+    Parameters
+    ----------
+    model:
+        base MILP model of the probel
+    Return
+    ----------
+    Model
+        the model with the added constraints
+    """
+    x1, x2, n = get_x1_x2_n(model)
+    for v in 2:n
+        for w in 2:n
+            if v != w
+                @constraint(model, 2x1[v,w] <= 2x2[v,w] + x2[v,1] + x2[1,w])
+                @constraint(model, 2x2[v,w] <= 2x1[v,w] + x1[v,1] + x1[1,w])
+                @constraint(model, 2x1[v,1] + 2x1[1,w] <= 2 + 2x2[v,w] + x2[v,1] + x2[1,w])
+                @constraint(model, 2x2[v,1] + 2x2[1,w] <= 2 + 2x1[v,w] + x1[v,1] + x1[1,w])
+            end
+        end
+    end
+	return model
+end
+
 function add_no_permutation_no_overlap_constraint(model)
     """
     Add the constraints 16-17, 6-13, 24
@@ -433,4 +433,105 @@ function add_no_permutation_no_overlap_constraint(model)
     model = add_y_constraints(model)
     model = add_no_overlap_constraint(model)
     return model
+end
+
+function add_permutation_overlap_constraint(model)
+    """
+    Add the constraints 
+
+    Parameters
+    ----------
+    model:
+        base MILP model of the probel
+    Return
+    ----------
+    Model
+        the model with the added constraints
+    """
+    
+    return 
+end
+
+function add_permutation_no_overlap_constraint(model)
+    """
+    Add the constraints 
+
+    Parameters
+    ----------
+    model:
+        base MILP model of the probel
+    Return
+    ----------
+    Model
+        the model with the added constraints
+    """
+    
+    return
+end
+
+function add_pickup_permutation_overlap_constraint(model)
+    """
+    Add the constraints 
+
+    Parameters
+    ----------
+    model:
+        base MILP model of the probel
+    Return
+    ----------
+    Model
+        the model with the added constraints
+    """
+
+    return 
+end
+
+function add_pickup_permutation_no_overlap_constraint(model)
+    """
+    Add the constraints
+
+    Parameters
+    ----------
+    model:
+        base MILP model of the probel
+    Return
+    ----------
+    Model
+        the model with the added constraints
+    """
+    return
+end
+
+function add_delivery_permutation_overlap_constraint(model)
+    """
+    Add the constraints
+
+    Parameters
+    ----------
+    model:
+        base MILP model of the probel
+    Return
+    ----------
+    Model
+        the model with the added constraints
+    """
+    println("Not yet implemented!")
+    exit(-1)
+end
+
+function add_delivery_permutation_no_overlap_constraint(model)
+    """
+    Add the constraints 
+
+    Parameters
+    ----------
+    model:
+        base MILP model of the probel
+    Return
+    ----------
+    Model
+        the model with the added constraints
+    """
+    println("Not yet implemented!")
+    exit(-1)
 end

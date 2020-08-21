@@ -73,9 +73,13 @@ module config
     function get_overlap()
         return conf["overlap"]
     end
+
+    function get_permutation()
+        return conf["permutation"]
+    end
 end
 
-function save_instance(filename, name, model, n, k_p, k_d, time)
+function save_instance(filename, name, permutation, overlap, model, n, k_p, k_d, time)
     """
     Write on a file a row in the format "instance_name n kp kd 3b-1 3b-2 time"
 
@@ -85,6 +89,10 @@ function save_instance(filename, name, model, n, k_p, k_d, time)
         name of the output file
     name: string
         name of the instance
+    permutation: int
+        flavor of the problem
+    overlap: boolean
+        version of the problem
     model: Model
         solved MILP model of the probel
     n: int
@@ -97,8 +105,25 @@ function save_instance(filename, name, model, n, k_p, k_d, time)
         time in seconds elapsed
     """
     best_value, lower_bound = get_opt(model)
+    
+    if permutation == 1
+        permutation = "no-permutation"
+    elseif permutation == 2
+        permutation = "permutation"
+    elseif permutation == 3
+        permutation = "pck-permutation"
+    elseif  permutation == 4
+        permutation = "dlv-permutation"
+    end
+
+    if overlap
+        overlap = "overlap"
+    else
+        overlap = "no overlap"
+    end
+    
     open(filename, "a") do f
-        write(f, "$name $n $k_p $k_d $best_value $lower_bound $time \n")
+        write(f, "$name $permutation $overlap $n $k_p $k_d $best_value $lower_bound $time \n")
     end
 end
 
