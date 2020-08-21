@@ -123,7 +123,7 @@ function get_distance_matrices(pck_points, dlv_points, to_round)
     return pck_matrix, dlv_matrix
 end
 
-function check_solution_integrity(pck_m, dlv_m, pck_k, dlv_k)
+function check_solution_integrity(pck_m, dlv_m, pck_k, dlv_k, overlap)
     """
     Checking the integrity of pickup and delivery
 
@@ -137,6 +137,8 @@ function check_solution_integrity(pck_m, dlv_m, pck_k, dlv_k)
         matrices of edges that describe the delivery solution
     dlv_k: int
         maximum capacity of the delivery veichle 
+    overlap: boolean
+        specify the flavor of the problem
     Return
     ---------
     boolean
@@ -147,7 +149,47 @@ function check_solution_integrity(pck_m, dlv_m, pck_k, dlv_k)
     pck = check_integrity(pck_m, pck_k)
     println("Checking delivery solution integrity...")
     dlv = check_integrity(dlv_m, dlv_k)
+    fifo = check_fifo(dlv_m, pck_m, overlap)
     return (pck && dlv)
+end
+
+function check_fifo(dm, pm, overlap)
+    """
+    Check if the provided solutions respect the fifo constraint
+
+    Parameters
+    ----------
+    dm: Array{Int64, 2}
+        delivery matrix solution
+    pm: Array{Int64, 2}
+        pickup matrix solution
+    overlap: boolean
+        specify the flavor of the problem
+    Return
+    ----------
+    boolean
+        true if the fifo constraint is respected, false otherwise
+    """
+    pck_trips, _ = find_connected_excluded_elements(pm)
+    dlv_trips, _ = find_connected_excluded_elements(dm)
+
+    println(pck_trips)
+    println(dlv_trips)
+
+    if !overlap
+        for p in pck_trips
+            for d in dlv_trips
+                if length(intersect(p, d)) > 0                      # V(p) ∩ V(d) =/= 0
+                    if d ⊈ p                                        # V(d) !⊆ V(p)
+                        return false
+                    end
+                end
+            end
+        end
+    end
+    
+
+    return true
 end
 
 function check_integrity(matrix, capacity)
@@ -155,6 +197,7 @@ function check_integrity(matrix, capacity)
     Checking the integrity of a solution:
         - all the nodes are in a tour
         - capacity not exceed the veichle one's
+
 
     Parameters
     ---------

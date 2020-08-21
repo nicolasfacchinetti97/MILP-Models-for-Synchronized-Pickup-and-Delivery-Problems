@@ -55,12 +55,9 @@ pi_tour, di_tour, x1, x2, time = try
     solve(model, false)
 catch e
     println(e.msg)
-    # TODO add the call to the heuristic to fix the sequence
-    1, 2, [0 0 1
-    1 0 0
-    0 1 0], [0 0 1
-    1 0 0
-    0 1 0], max_seconds
+    # solution not found
+    println("No base solution found, skipping problem $pck_file + $dlv_file...")
+    exit(-1)
 end  
 println("Cost pickup: $pi_tour, cost delivery: $di_tour.\n")
 
@@ -73,7 +70,7 @@ save_instance(out_name, pck_file, model, read_n_node, pck_k, dlv_k, time)
 # end
 
 # check solution integrity
-if check_solution_integrity(x1, x2, pck_k, dlv_k)
+if check_solution_integrity(x1, x2, pck_k, dlv_k, overlap)
     println("Integrity check passed\n")
 else
     println("Integrity check not passed\n")

@@ -134,6 +134,7 @@ function solve(model, dump)
         t = solve_time(model)
         return pck_tour, dlv_tour, x1, x2, t
     elseif termination_status(model) == MOI.TIME_LIMIT && has_values(model)
+        println("\nMaximun search time elapsed, stopping...\n")
         pck_tour = value(cost_pck)
         dlv_tour = value(cost_dlv)
         x1 = value.(x1)
