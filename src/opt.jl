@@ -352,23 +352,11 @@ function add_y_constraints(model)
         for v in 2:n
             for w in 2:n
                 if u != v && u != w && v != w
-                    @constraint(model, y1[v,w] + y1[w,v] <= 1)
-                    @constraint(model, y2[v,w] + y2[w,v] <= 1)
-
-                    @constraint(model, y1[v,w] + x1[v,w] <= 1)
-                    @constraint(model, y2[v,w] + x2[v,w] <= 1)
-
-                    @constraint(model, y1[v,w] + x1[w,v] <= 1)
-                    @constraint(model, y2[v,w] + x2[w,v] <= 1)
-
                     @constraint(model, y1[u,v] + y1[v,u] + y1[v,w] + y1[w,v] + y1[u,w] + y1[w,u] >= 0)
                     @constraint(model, y2[u,v] + y2[v,u] + y2[v,w] + y2[w,v] + y2[u,w] + y2[w,u] >= 0)
 
                     @constraint(model, y1[u,v] + y1[v,w] - y1[u,w] <= 1)
                     @constraint(model, y2[u,v] + y2[v,w] - y2[u,w] <= 1)
-
-                    @constraint(model, x1[1,v] + x1[1,w] - y1[v,w] - y1[w,v] <= 1)
-                    @constraint(model, x2[1,v] + x2[1,w] - y2[v,w] - y2[w,v] <= 1)
 
                     @constraint(model, y1[u,v] + x1[v,w] - y1[u,w] <= 1)
                     @constraint(model, y2[u,v] + x2[v,w] - y2[u,w] <= 1)
@@ -376,6 +364,24 @@ function add_y_constraints(model)
                     @constraint(model, y1[u,v] + x1[u,w] - y1[w,v] <= 1)
                     @constraint(model, y2[u,v] + x2[u,w] - y2[w,v] <= 1)
                 end
+            end
+        end
+    end
+
+    for v in 2:n
+        for w in 2:n
+            if v != w
+                @constraint(model, y1[v,w] + y1[w,v] <= 1)
+                @constraint(model, y2[v,w] + y2[w,v] <= 1)
+
+                @constraint(model, y1[v,w] + x1[v,w] <= 1)
+                @constraint(model, y2[v,w] + x2[v,w] <= 1)
+
+                @constraint(model, y1[v,w] + x1[w,v] <= 1)
+                @constraint(model, y2[v,w] + x2[w,v] <= 1)
+
+                @constraint(model, x1[1,v] + x1[1,w] - y1[v,w] - y1[w,v] <= 1)
+                @constraint(model, x2[1,v] + x2[1,w] - y2[v,w] - y2[w,v] <= 1)
             end
         end
     end
