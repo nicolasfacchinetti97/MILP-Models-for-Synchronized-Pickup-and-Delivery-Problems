@@ -149,47 +149,7 @@ function check_solution_integrity(pck_m, dlv_m, pck_k, dlv_k, overlap)
     pck = check_integrity(pck_m, pck_k)
     println("Checking delivery solution integrity...")
     dlv = check_integrity(dlv_m, dlv_k)
-    fifo = check_fifo(dlv_m, pck_m, overlap)
     return (pck && dlv)
-end
-
-function check_fifo(dm, pm, overlap)
-    """
-    Check if the provided solutions respect the fifo constraint
-
-    Parameters
-    ----------
-    dm: Array{Int64, 2}
-        delivery matrix solution
-    pm: Array{Int64, 2}
-        pickup matrix solution
-    overlap: boolean
-        specify the flavor of the problem
-    Return
-    ----------
-    boolean
-        true if the fifo constraint is respected, false otherwise
-    """
-    pck_trips, _ = find_connected_excluded_elements(pm)
-    dlv_trips, _ = find_connected_excluded_elements(dm)
-
-    println(pck_trips)
-    println(dlv_trips)
-
-    if !overlap
-        for p in pck_trips
-            for d in dlv_trips
-                if length(intersect(p, d)) > 0                      # V(p) ∩ V(d) =/= 0
-                    if d ⊈ p                                        # V(d) !⊆ V(p)
-                        return false
-                    end
-                end
-            end
-        end
-    end
-    
-
-    return true
 end
 
 function check_integrity(matrix, capacity)
