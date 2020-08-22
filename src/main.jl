@@ -81,8 +81,10 @@ catch e
     # solution not found
     println("No base solution found, skipping problem $pck_file + $dlv_file...")
     exit(-1)
-end  
-println("Cost pickup: $pi_tour, cost delivery: $di_tour.\n")
+end
+toursp, _ = find_connected_excluded_elements(x1)
+toursd, _ = find_connected_excluded_elements(x2) 
+println("\nCost pickup: $pi_tour, cost delivery: $di_tour.\nPickup tour $toursp\nDelivery tour $toursd\n")
 
 # save the result of the instance
 save_instance(out_name, pck_file, permutation, overlap, model, read_n_node, pck_k, dlv_k, time)

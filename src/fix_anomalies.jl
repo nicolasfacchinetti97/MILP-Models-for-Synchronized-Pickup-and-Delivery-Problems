@@ -1,5 +1,10 @@
 import Dates
 
+# for the calculus of the mincut
+using LightGraphsFlows
+import LightGraphs
+const lg = LightGraphs
+
 function find_tour(start_node, end_node, matrix)
     """
     find a tour in the graph using a starting node and a end node in a matrix of edges
@@ -135,10 +140,9 @@ function print_arr(arr)
     println()
 end
 
-function check_constraints(model, m, k, type)
+function check_constraint_4(model, m, k, type)
     """
     check the model if violate on of the constraint (4); if yes return the constraint, 0 otherwise
-
 
     Parameters
     ---------
@@ -165,4 +169,50 @@ function check_constraints(model, m, k, type)
         con = get_violated_constraint(model, res, k, type)
         return con
     end
+end
+
+function check_constraint_23(model, md, y1, y2)
+    """
+    check the model if violate one of the constraint (23); if yes return the constraint, 0 otherwise
+
+    Parameters
+    ---------
+    model: Model
+        MILP model of the problem
+    md: Array{Int64, 2}
+        matrix of the arches describing the delivery graph
+    Return
+    ---------
+    con:
+        a violated constraint of type 4
+    int:
+        0 if no violated constraint finded
+    """
+    n = size(md, 1)
+    for v in 2:n
+        for w in 2:n
+            nodes = setdiff(1:n, w)
+            graph, wheights = build_directed_graph(nodes, md, n)
+            set1, set2, value = LightGraphsFlows.mincut(graph, 1, v, wheights, LightGraphsFlows.PushRelabelAlgorithm())
+            
+            if (y1[v,w] - y2[v,w]) > value
+                println("Find a violated constraint 23")
+                return build_constraint_23(model, md, v, w, set1, set2)
+            end
+        end
+    end
+    println("No violated constraint 23 found!")
+    return 0
+end
+
+function build_directed_graph(nodes, md, n)
+    graph = lg.DiGraph(n)                                   # my graph
+    capacity_matrix = zeros(Int, n, n)                      # array with edges values                  
+    for v in nodes
+        for w in nodes
+            lg.add_edge!(graph, v, w)
+            capacity_matrix[v,w] = md[v,w]
+        end
+    end
+    return graph, capacity_matrix
 end

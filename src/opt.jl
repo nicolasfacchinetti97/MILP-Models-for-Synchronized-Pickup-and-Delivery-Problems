@@ -76,20 +76,41 @@ function build_model(pck_matrix, dlv_matrix, time, print_log)
         k_dlv = config.get_dlv_k()
 
         println("\nChecking for violated constraints in pickup")
-        res_pck = check_constraints(model, m_pck, k_pck, 1)
+        res_pck = check_constraint_4(model, m_pck, k_pck, 1)
         if res_pck != 0
             MOI.submit(model, MOI.LazyConstraint(cb_data), res_pck)
         end
 
         println("Checking for violated constraints in delivery")
-        res_dlv = check_constraints(model, m_dlv, k_dlv, 2)
+        res_dlv = check_constraint_4(model, m_dlv, k_dlv, 2)
         if res_dlv != 0
             MOI.submit(model, MOI.LazyConstraint(cb_data), res_dlv)
         end
         
     end
 
-    MOI.set(model, MOI.LazyConstraintCallback(), callback_check_constraints)
+    # set the function to call to implement the constraint 23
+    model = add_y_constraints(model)
+    function callback_constraint23(cb_data)
+        # need to add this strange syntax since cannot extract multiple variables from cb_data
+        m_dlv = callback_value.(Ref(cb_data), x2)
+        y1, y2 = get_y1_y2(model)
+        y1 = callback_value.(Ref(cb_data), y1)
+        y2 = callback_value.(Ref(cb_data), y2)
+
+        println("\nSearching the minimizing constraint 23")
+        res = check_constraint_23(model, m_dlv, y1, y2)
+        if res != 0
+            MOI.submit(model, MOI.LazyConstraint(cb_data), res)
+        end
+    end
+
+    function super_callback(cb_data)
+        callback_check_constraints(cb_data)
+        callback_constraint23(cb_data)
+    end
+    MOI.set(model, MOI.LazyConstraintCallback(), super_callback)
+
     return model
 end
 
@@ -240,6 +261,13 @@ function get_dynamic_constraint(model, S, k, type)
     return con
 end
 
+function build_constraint_23(model, matrix, v, w, S1, S2)
+    x1, x2, n = get_x1_x2_n(model)
+    y1, y2 = get_y1_y2(model)
+    con = @build_constraint(y1[v,w] - y2[w,v] + sum(x2[a,b] for a in S1, b in S2) <= 0)
+    return con
+end
+
 function get_opt(model)
     """
     return the value of the best solution and the best lower bound
@@ -381,7 +409,7 @@ function add_no_overlap_constraint(model)
     for u in 2:n
         for v in 2:n
             if u != v
-                @constraint(model, 2(y2[u,v] + y2[v,u]) >= y1[u,v] + y1[v,u])
+                @constraint(model, y2[u,v] >= y1[u,v])
             end
         end
     end
@@ -437,7 +465,7 @@ end
 
 function add_permutation_overlap_constraint(model)
     """
-    Add the constraints 
+    Add the constraints 6-14 and 18
 
     Parameters
     ----------
@@ -448,13 +476,25 @@ function add_permutation_overlap_constraint(model)
     Model
         the model with the added constraints
     """
-    
-    return 
+    x1, x2, n = get_x1_x2_n(model)
+
+    model = add_y_constraints(model)
+
+    y1, y2 = get_y1_y2(model)
+
+    for v in 2:n
+        for w in 2:n
+            if v != w
+                @constraint(model, y1[v,w] + y2[w,v] <= 1)
+            end
+        end
+    end
+    return model
 end
 
 function add_permutation_no_overlap_constraint(model)
     """
-    Add the constraints 
+    Add the constraints 6-14, 18 and 24
 
     Parameters
     ----------
@@ -465,13 +505,14 @@ function add_permutation_no_overlap_constraint(model)
     Model
         the model with the added constraints
     """
-    
-    return
+    model = add_permutation_overlap_constraint(model)
+    model = add_no_overlap_constraint(model)
+    return model
 end
 
 function add_pickup_permutation_overlap_constraint(model)
     """
-    Add the constraints 
+    Add the constraints 6-14, 22-23
 
     Parameters
     ----------
@@ -482,13 +523,23 @@ function add_pickup_permutation_overlap_constraint(model)
     Model
         the model with the added constraints
     """
+    y1, y2 = get_y1_y2(model)
+    x1, x2, n = get_x1_x2_n(model)
+    for v in 2:n
+        for w in 2:n
+            if v != w
+                @constraint(model, y1[v,w] + y2[w,v] <= 1)
+            end
+        end
+    end
 
-    return 
+    
+    return model
 end
 
 function add_pickup_permutation_no_overlap_constraint(model)
     """
-    Add the constraints
+    Add the constraints 6-14, 22-24
 
     Parameters
     ----------
@@ -499,7 +550,9 @@ function add_pickup_permutation_no_overlap_constraint(model)
     Model
         the model with the added constraints
     """
-    return
+    model = add_pickup_permutation_overlap_constraint(model)
+    model = add_no_overlap_constraint(model)
+    return model
 end
 
 function add_delivery_permutation_overlap_constraint(model)
