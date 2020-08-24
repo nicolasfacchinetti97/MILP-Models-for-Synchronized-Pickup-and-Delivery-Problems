@@ -261,10 +261,10 @@ function get_dynamic_constraint(model, S, k, type)
     return con
 end
 
-function build_constraint_23(model, matrix, v, w, S1, S2)
+function build_constraint_23(model, v, w, S1, S2)
     x1, x2, n = get_x1_x2_n(model)
     y1, y2 = get_y1_y2(model)
-    con = @build_constraint(y1[v,w] - y2[w,v] + sum(x2[a,b] for a in S1, b in S2) <= 0)
+    con = @build_constraint(y1[v,w] - y2[v,w] - sum(x2[a,b] for a in S1, b in S2) <= 0)
     return con
 end
 

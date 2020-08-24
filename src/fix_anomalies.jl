@@ -181,23 +181,31 @@ function check_constraint_23(model, md, y1, y2)
         MILP model of the problem
     md: Array{Int64, 2}
         matrix of the arches describing the delivery graph
+    y1: Array{Int64, 2}
+        matrix of precedence y1
+    y2: Array{Int64, 2}
+        matrix of precedence y2
     Return
     ---------
     con:
-        a violated constraint of type 4
+        a violated constraint of type 23
     int:
         0 if no violated constraint finded
     """
     n = size(md, 1)
     for v in 2:n
         for w in 2:n
-            nodes = setdiff(1:n, w)
-            graph, wheights = build_directed_graph(nodes, md, n)
-            set1, set2, value = LightGraphsFlows.mincut(graph, 1, v, wheights, LightGraphsFlows.PushRelabelAlgorithm())
-            
-            if (y1[v,w] - y2[v,w]) > value
-                println("Find a violated constraint 23")
-                return build_constraint_23(model, md, v, w, set1, set2)
+            if v != w
+                nodes = setdiff(1:n, w)
+                graph, weights = build_directed_graph(nodes, md, n)
+                set1, set2, value = LightGraphsFlows.mincut(graph, 1, v, weights, LightGraphsFlows.PushRelabelAlgorithm())
+                
+                if (y1[v,w] - y2[v,w]) > value
+                    set2 = setdiff!(set2, w)
+                    println("Find a violated constraint 23, S': $set1, S: $set2")
+
+                    return build_constraint_23(model, v, w, set1, set2)
+                end
             end
         end
     end
@@ -211,7 +219,7 @@ function build_directed_graph(nodes, md, n)
     for v in nodes
         for w in nodes
             lg.add_edge!(graph, v, w)
-            capacity_matrix[v,w] = md[v,w]
+            capacity_matrix[v,w] = (md[v,w] >= 0.5 ? 1 : 0) # for the non integer values returned by cplex
         end
     end
     return graph, capacity_matrix
