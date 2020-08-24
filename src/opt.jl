@@ -3,6 +3,9 @@ using JuMP
 using CPLEX
 using DelimitedFiles
 
+
+model = nothing
+
 function build_model(pck_matrix, dlv_matrix, time, print_log)
     """
     Build the base optimization problem with only 1 - 2 - 3 constraint
@@ -23,7 +26,7 @@ function build_model(pck_matrix, dlv_matrix, time, print_log)
         the base MILP model of the problem
     """
     n = size(pck_matrix, 1)                         # get dimension of the matrix (number nodes)
-    model = Model(CPLEX.Optimizer)                      # get a model with CPLEX as Optimizer
+    global model = Model(CPLEX.Optimizer)                      # get a model with CPLEX as Optimizer
     set_time_limit_sec(model, time)
     set_optimizer_attribute(model, "CPX_PARAM_SCRIND", print_log)
     # _____________________________________ VARIABLES _____________________________________
@@ -67,53 +70,84 @@ function build_model(pck_matrix, dlv_matrix, time, print_log)
     @constraint(model, no_self_pck[i in 1:n], x1[i,i] == 0)
     @constraint(model, no_self_dlv[i in 1:n], x2[i,i] == 0)
 
-    # set the function to call to fix the anomalies
-    function callback_check_constraints(cb_data)
-        # need to add this strange syntax since cannot extract multiple variables from cb_data
-        m_pck = callback_value.(Ref(cb_data), x1)
-        m_dlv = callback_value.(Ref(cb_data), x2)
-        k_pck = config.get_pck_k()
-        k_dlv = config.get_dlv_k()
-
-        println("\nChecking for violated constraints in pickup")
-        res_pck = check_constraint_4(model, m_pck, k_pck, 1)
-        if res_pck != 0
-            MOI.submit(model, MOI.LazyConstraint(cb_data), res_pck)
-        end
-
-        println("Checking for violated constraints in delivery")
-        res_dlv = check_constraint_4(model, m_dlv, k_dlv, 2)
-        if res_dlv != 0
-            MOI.submit(model, MOI.LazyConstraint(cb_data), res_dlv)
-        end
-        
-    end
-
-    # set the function to call to implement the constraint 23
-    model = add_y_constraints(model)
-    function callback_constraint23(cb_data)
-        # need to add this strange syntax since cannot extract multiple variables from cb_data
-        m_dlv = callback_value.(Ref(cb_data), x2)
-        y1, y2 = get_y1_y2(model)
-        y1 = callback_value.(Ref(cb_data), y1)
-        y2 = callback_value.(Ref(cb_data), y2)
-
-        println("\nSearching the minimizing constraint 23")
-        res = check_constraint_23(model, m_dlv, y1, y2)
-        if res != 0
-            MOI.submit(model, MOI.LazyConstraint(cb_data), res)
-        end
-    end
-
-    function super_callback(cb_data)
-        callback_check_constraints(cb_data)
-        callback_constraint23(cb_data)
-    end
-    MOI.set(model, MOI.LazyConstraintCallback(), super_callback)
+    # set the callback to check constraint 4
+    MOI.set(model, MOI.LazyConstraintCallback(), callback_constraint4)
 
     return model
 end
 
+function get_model()
+    """
+    return the MILP model
+    """
+    return model
+end
+
+function callback_constraint4(cb_data)
+    """
+    callback to dynamic check the constraint 4
+
+    Parameters
+    ----------
+    cb_data
+        callback data
+    """
+    x1, x2, n = get_x1_x2_n(get_model())
+    # need to add this strange syntax since cannot extract multiple variables from cb_data
+    m_pck = callback_value.(Ref(cb_data), x1)
+    m_dlv = callback_value.(Ref(cb_data), x2)
+    k_pck = config.get_pck_k()
+    k_dlv = config.get_dlv_k()
+
+    println("\nChecking for violated constraints in pickup")
+    res_pck = check_constraint_4(model, m_pck, k_pck, 1)
+    if res_pck != 0
+        MOI.submit(model, MOI.LazyConstraint(cb_data), res_pck)
+    end
+
+    println("Checking for violated constraints in delivery")
+    res_dlv = check_constraint_4(model, m_dlv, k_dlv, 2)
+    if res_dlv != 0
+        MOI.submit(model, MOI.LazyConstraint(cb_data), res_dlv)
+    end
+    
+end
+
+function callback_constraint23(cb_data)
+    """
+    callback to dynamic check the constraint 23
+
+    Parameters
+    ----------
+    cb_data
+        callback data
+    """
+    # need to add this strange syntax since cannot extract multiple variables from cb_data
+    x1, x2, n = get_x1_x2_n(get_model())
+    m_dlv = callback_value.(Ref(cb_data), x2)
+    y1, y2 = get_y1_y2(get_model())
+    y1 = callback_value.(Ref(cb_data), y1)
+    y2 = callback_value.(Ref(cb_data), y2)
+
+    println("\nSearching the minimizing constraint 23")
+    res = check_constraint_23(model, m_dlv, y1, y2)
+    if res != 0
+        MOI.submit(model, MOI.LazyConstraint(cb_data), res)
+    end
+end
+
+function callback_c4_c23(cb_data)
+    """
+    callback to dynamic check the constraints 4 and 23
+
+    Parameters
+    ----------
+    cb_data
+        callback data
+    """
+    callback_constraint4(cb_data)
+    callback_constraint23(cb_data)
+end
 
 function solve(model, dump)
     """
@@ -165,40 +199,6 @@ function solve(model, dump)
     else
         error("The model was not solved correctly.")
     end  
-end
-
-function get_x1(model)
-    """
-    Query the model for the value of x1
-
-    Parameters
-    ---------
-    model: Model
-        MILP model of the probel
-    Return
-    ---------
-    Array{Int64, 2}
-        matrix x1
-    """
-    x1 = model[:x1]
-    return value.(x1)
-end
-
-function get_x2(model)
-    """
-    Query the model for the value of x2
-
-    Parameters
-    ---------
-    model: Model
-        MILP model of the probel
-    Return
-    ---------
-    Array{Int64, 2}
-        matrix x2
-    """
-    x2 = model[:x2]
-    return value.(x2)
 end
 
 function get_values(model)
@@ -262,6 +262,26 @@ function get_dynamic_constraint(model, S, k, type)
 end
 
 function build_constraint_23(model, v, w, S1, S2)
+    """
+    build the constraint (4) restricted to a set of nodes
+    
+    Parameters
+    ---------
+    model: Model
+        MILP model of the problem
+    v: int
+        first index
+    w: int
+        second index
+    S1: Array{Int64, 1}
+        set of points S' obtainted by the mincut
+    S2: Array{Int64, 1}
+        set of points S obtainted by the mincut
+    Return
+    ---------
+    constraint
+        a new costraint to be added to the model
+    """
     x1, x2, n = get_x1_x2_n(model)
     y1, y2 = get_y1_y2(model)
     con = @build_constraint(y1[v,w] - y2[v,w] - sum(x2[a,b] for a in S1, b in S2) <= 0)
@@ -392,7 +412,7 @@ end
 
 function add_no_overlap_constraint(model)
     """
-    Add the constraint 24 to obtain the no overal variant
+    Add the constraint 24 to obtain the no overlap variant
 
     Parameters
     ----------
@@ -523,17 +543,8 @@ function add_pickup_permutation_overlap_constraint(model)
     Model
         the model with the added constraints
     """
-    y1, y2 = get_y1_y2(model)
-    x1, x2, n = get_x1_x2_n(model)
-    for v in 2:n
-        for w in 2:n
-            if v != w
-                @constraint(model, y1[v,w] + y2[w,v] <= 1)
-            end
-        end
-    end
-
-    
+    model = add_permutation_overlap_constraint(model)
+    MOI.set(model, MOI.LazyConstraintCallback(), callback_c4_c23)
     return model
 end
 

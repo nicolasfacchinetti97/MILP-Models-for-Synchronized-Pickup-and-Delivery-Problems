@@ -135,11 +135,6 @@ function get_violated_constraint(model, anomaly, capacity, problem_type)
     return con
 end
 
-function print_arr(arr)
-    show(stdout, "text/plain", arr)
-    println()
-end
-
 function check_constraint_4(model, m, k, type)
     """
     check the model if violate on of the constraint (4); if yes return the constraint, 0 otherwise
@@ -198,11 +193,12 @@ function check_constraint_23(model, md, y1, y2)
             if v != w
                 nodes = setdiff(1:n, w)
                 graph, weights = build_directed_graph(nodes, md, n)
+                # calculate the mincut and return the two set of nodes
                 set1, set2, value = LightGraphsFlows.mincut(graph, 1, v, weights, LightGraphsFlows.PushRelabelAlgorithm())
                 
                 if (y1[v,w] - y2[v,w]) > value
                     set2 = setdiff!(set2, w)
-                    println("Find a violated constraint 23, S': $set1, S: $set2")
+                    println("Find a violated constraint 23, w: $w, S': $set1, S: $set2")
 
                     return build_constraint_23(model, v, w, set1, set2)
                 end
@@ -213,13 +209,32 @@ function check_constraint_23(model, md, y1, y2)
     return 0
 end
 
-function build_directed_graph(nodes, md, n)
+function build_directed_graph(nodes, m, n)
+    """
+    buil a graph to compute the mincut
+
+    Parameters
+    ----------
+    nodes: Array{Int64, 1}
+        list of nodes to put in the graph
+    m: Array{Int64, 2}
+        matrix of arches describing the tour
+    n: int
+        number of nodes of the graph
+    Return
+    ----------
+    tuple:
+        graph: DiGraph
+            directed graph with edges
+        capacity_matrix: Array{Int, 2}
+            array with edge values for the graph
+    """
     graph = lg.DiGraph(n)                                   # my graph
     capacity_matrix = zeros(Int, n, n)                      # array with edges values                  
     for v in nodes
         for w in nodes
             lg.add_edge!(graph, v, w)
-            capacity_matrix[v,w] = (md[v,w] >= 0.5 ? 1 : 0) # for the non integer values returned by cplex
+            capacity_matrix[v,w] = (m[v,w] >= 0.5 ? 1 : 0) # for the non integer values returned by cplex
         end
     end
     return graph, capacity_matrix
