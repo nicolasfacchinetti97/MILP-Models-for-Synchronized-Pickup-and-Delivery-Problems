@@ -84,6 +84,11 @@ catch e
 end
 toursp, _ = find_connected_excluded_elements(x1)
 toursd, _ = find_connected_excluded_elements(x2) 
+
+y1, y2 = get_y1_y2(model)
+sort!(toursp, lt=(x,y) -> isless(0.5, value(y1[x[1], y[1]])))
+sort!(toursd, lt=(x,y) -> isless(0.5, value(y2[x[1], y[1]])))
+
 println("\nCost pickup: $pi_tour, cost delivery: $di_tour.\nPickup tour $toursp\nDelivery tour $toursd\n")
 
 # save the result of the instance
