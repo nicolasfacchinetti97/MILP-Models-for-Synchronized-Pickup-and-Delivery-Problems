@@ -100,17 +100,25 @@ function callback_constraint4(cb_data)
     k_dlv = config.get_dlv_k()
 
     println("\nChecking for violated constraints in pickup")
-    res_pck = check_constraint_4(model, m_pck, k_pck, 1)
-    if res_pck != 0
-        MOI.submit(model, MOI.LazyConstraint(cb_data), res_pck)
+    if binary_array(m_pck)
+        res_pck = check_constraint_4(model, m_pck, k_pck, 1)
+        if res_pck != 0
+            MOI.submit(model, MOI.LazyConstraint(cb_data), res_pck)
+        end
+    else
+        println("\nNo integer solution for pickup, skipping...")
     end
 
     println("Checking for violated constraints in delivery")
-    res_dlv = check_constraint_4(model, m_dlv, k_dlv, 2)
-    if res_dlv != 0
-        MOI.submit(model, MOI.LazyConstraint(cb_data), res_dlv)
-    end
-    
+    if binary_array(m_dlv)
+        res_dlv = check_constraint_4(model, m_dlv, k_dlv, 2)
+        if res_dlv != 0
+            MOI.submit(model, MOI.LazyConstraint(cb_data), res_dlv)
+        end
+    else
+        println("No integer solution for delivery, skipping...") 
+    end    
+
 end
 
 function callback_constraint23(cb_data)
@@ -130,9 +138,13 @@ function callback_constraint23(cb_data)
     y2 = callback_value.(Ref(cb_data), y2)
 
     println("\nSearching the minimizing constraint 23")
-    res = check_constraint_23(model, m_dlv, y1, y2)
-    if res != 0
-        MOI.submit(model, MOI.LazyConstraint(cb_data), res)
+    if (binary_array(m_dlv) && binary_array(y1) && binary_array(y2))
+        res = check_constraint_23(model, m_dlv, y1, y2)
+        if res != 0
+            MOI.submit(model, MOI.LazyConstraint(cb_data), res)
+        end
+    else
+        println("No integer solution for delivery matrix or y1 or y2, skipping...")
     end
 end
 
@@ -148,6 +160,25 @@ function callback_c4_c23(cb_data)
     callback_constraint4(cb_data)
     callback_constraint23(cb_data)
 end
+
+function binary_array(m_arr)
+    """
+    checks whether an array has all its entries in 0/1
+
+    Parameters
+    ----------
+    m_arr
+        array to be checked 
+    """
+    result = true 
+    for i in eachindex(m_arr)
+        if m_arr[i] > 0.000001 && m_arr[i] < 0.999999
+            result = false
+        end
+    end 
+    return result
+end
+
 
 function solve(model, dump)
     """
