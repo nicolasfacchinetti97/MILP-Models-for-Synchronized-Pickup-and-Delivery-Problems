@@ -1,5 +1,5 @@
-pck_k = 4                               # pickup veichle dimension
-dlv_k = 2                               # delivery veichle dimension
+pck_k = 3                               # pickup veichle dimension
+dlv_k = 4                               # delivery veichle dimension
 file_dir = "../istanze/"                 # folder containing istances
 pck_file = "33p00p.tsp"                # pickup file
 dlv_file = "33p00d.tsp"                # delivery file
@@ -8,9 +8,9 @@ print_log = false                       # suppress logging of CPLEX
 model_dump = true                       # for dumping to .lp file the model
 save_dot = true                         # for saving the final matrices in dot file
 result_name = "result.txt"              # filename used to write the instance solution
-read_n_nodes = 8                        # max number of nodes to read from files
+read_n_nodes = 9                        # max number of nodes to read from files
 max_seconds = 3600                       # max seconds to wait for a opt solution
 out_name = "out.txt"                    # filename used to save the result of all the instances
 #flavor of the problem
-overlap = false                      
-permutation = 3                         # 1: no permutation, 2: permutation, 3: pickup permutation, 4: delivery permutation
+overlap = true                      
+permutation = 2                         # 1: no permutation, 2: permutation, 3: pickup permutation, 4: delivery permutation

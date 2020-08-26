@@ -188,6 +188,7 @@ function check_constraint_23(model, md, y1, y2)
         0 if no violated constraint finded
     """
     n = size(md, 1)
+    tol = get_optimizer_attribute(model, "CPX_PARAM_EPINT")
     for v in 2:n
         for w in 2:n
             if v != w
@@ -196,7 +197,7 @@ function check_constraint_23(model, md, y1, y2)
                 # calculate the mincut and return the two set of nodes
                 set1, set2, value = LightGraphsFlows.mincut(graph, 1, v, weights, LightGraphsFlows.PushRelabelAlgorithm())
                 
-                if (y1[v,w] - y2[v,w]) > value
+                if (y1[v,w] - y2[v,w]) > value + tol
                     set2 = setdiff!(set2, w)
                     println("Find a violated constraint 23, w: $w, S': $set1, S: $set2")
 
